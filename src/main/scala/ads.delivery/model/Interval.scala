@@ -1,5 +1,5 @@
 package ads.delivery.model
 
-import java.time.ZonedDateTime
+import ads.delivery.adt.ZonedDateTimeWithoutMillis
 
-final case class Interval(start: ZonedDateTime, end: ZonedDateTime)
+case class Interval(start: ZonedDateTimeWithoutMillis, end: ZonedDateTimeWithoutMillis)

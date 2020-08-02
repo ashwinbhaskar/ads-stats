@@ -1,6 +1,6 @@
 package ads.delivery.model
 
-import java.time.LocalDateTime
 import java.util.UUID
+import ads.delivery.adt.ZonedDateTimeWithMillis
 
-case class Click(deliveryId: UUID, clickId: UUID, time: LocalDateTime)
+case class Click(deliveryId: UUID, clickId: UUID, time: ZonedDateTimeWithMillis)
