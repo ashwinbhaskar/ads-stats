@@ -1,6 +1,8 @@
 package ads.delivery.adt
 
-sealed trait Browser
+sealed trait Browser {
+    def stringRep: String
+}
 
 object Browser {
     def fromString(str: String): Option[Browser] = 
@@ -13,7 +15,15 @@ object Browser {
             }
 }
 
-object Chrome extends Browser
-object FireFox extends Browser
-object Edge extends Browser
-object Safari extends Browser
+object Chrome extends Browser {
+    override def stringRep: String = "Chrome"
+}
+object FireFox extends Browser {
+    override def stringRep: String = "FireFox"
+}
+object Edge extends Browser {
+    override def stringRep: String = "Edge"
+}
+object Safari extends Browser {
+    override def stringRep: String = "Safari"
+}

@@ -1,6 +1,8 @@
 package ads.delivery.adt
 
-sealed trait OS
+sealed trait OS {
+    def stringRep: String
+}
 
 object OS {
     def fromString(s: String): Option[OS] = 
@@ -12,6 +14,12 @@ object OS {
         }
 }
 
-object IOS extends OS
-object Android extends OS
-object Windows extends OS
+object IOS extends OS {
+    override def stringRep: String = "IOS"
+}
+object Android extends OS {
+    override def stringRep: String = "Android"
+}
+object Windows extends OS {
+    override def stringRep: String = "Windows"
+}
