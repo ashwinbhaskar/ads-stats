@@ -1,4 +1,4 @@
-package model
+package ads.delivery.model
 
 import java.time.LocalDateTime
 import java.util.UUID

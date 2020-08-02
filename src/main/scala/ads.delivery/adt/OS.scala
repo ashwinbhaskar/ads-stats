@@ -1,4 +1,4 @@
-package adt
+package ads.delivery.adt
 
 sealed trait OS
 
