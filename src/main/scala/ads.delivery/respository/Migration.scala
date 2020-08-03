@@ -7,7 +7,6 @@ object Migration {
   
     def migrate(config: DBConfig): Unit = {
         val flyway = Flyway.configure()
-            .locations("migrations")
             .dataSource(config.getUrl,config.getUser, config.getPass)
             .load()
         flyway.migrate()
