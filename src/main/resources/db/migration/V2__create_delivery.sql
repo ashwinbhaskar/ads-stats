@@ -1,6 +1,6 @@
 CREATE TABLE delivery(
     delivery_id UUID PRIMARY KEY,
-    advertisement_id UUID NOT NULL,
+    advertisement_id INTEGER NOT NULL,
     t TIMESTAMP WITH TIME ZONE NOT NULL,
     browser TEXT,
     os TEXT,
