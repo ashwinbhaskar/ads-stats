@@ -7,6 +7,8 @@ ThisBuild / organizationName := "example"
 
 val circeVersion = "0.12.3"
 val doobieVersion = "0.8.8"
+val h2Version = "1.4.200"
+
 
 lazy val root = (project in file("."))
   .settings(
@@ -22,5 +24,8 @@ lazy val root = (project in file("."))
        "org.tpolecat" %% "doobie-core",
       "org.tpolecat" %% "doobie-h2",
       "org.tpolecat" %% "doobie-hikari"
-    ).map(_ % doobieVersion)
+    ).map(_ % doobieVersion) ++
+    Seq("com.h2database" % "h2" % h2Version,
+    "com.typesafe" % "config" % "1.4.0",
+    "org.flywaydb" % "flyway-core" % "6.2.1")
 )
