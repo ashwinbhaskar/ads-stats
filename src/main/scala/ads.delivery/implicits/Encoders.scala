@@ -1,8 +1,7 @@
-package ads.delivery.json
+package ads.delivery.implicits
 
 import io.circe.{Encoder, Json}
 import java.time.format.DateTimeFormatter
-import java.time.ZonedDateTime
 import java.util.UUID
 import java.net.URL
 import ads.delivery.adt._

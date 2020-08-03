@@ -1,4 +1,4 @@
-package ads.delivery.json
+package ads.delivery.implicits
 
 import scala.util.chaining._
 import org.scalatest.flatspec.AnyFlatSpec
@@ -9,11 +9,13 @@ import io.circe.literal._
 import io.circe.generic.auto._
 import ads.delivery.adt._
 import ads.delivery.model._
-import ads.delivery.json.Encoders._
+import ads.delivery.implicits.Encoders._
 import java.util.UUID
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.net.URL
+import java.time.OffsetTime
+import java.time.OffsetDateTime
 
 class EncodersTest extends AnyFlatSpec with Matchers {
 
@@ -21,7 +23,7 @@ class EncodersTest extends AnyFlatSpec with Matchers {
         val f = DateTimeFormatter.ISO_OFFSET_DATE_TIME
         val uuid1 = UUID.fromString("7cdbd969-4511-4a64-bff1-752786c76f82")
         val uuid2 = UUID.fromString("59e0c9dd-d2e8-424d-b26e-b13d717c5b73")
-        val zdt = ZonedDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
+        val zdt = OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
         val click = Click(uuid1, uuid2, new ZonedDateTimeWithMillis(zdt))
 
         val encoded = click.asJson
@@ -38,8 +40,8 @@ class EncodersTest extends AnyFlatSpec with Matchers {
 
     "Interval" should "get successfully encoded" in {
         val f = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
-        val start = ZonedDateTime.parse("2018-01-07T14:30:00+0000", f).pipe(new ZonedDateTimeWithoutMillis(_))
-        val end = ZonedDateTime.parse("2018-01-07T18:20:00+0000", f).pipe(new ZonedDateTimeWithoutMillis(_))
+        val start = OffsetDateTime.parse("2018-01-07T14:30:00+0000", f).pipe(new ZonedDateTimeWithoutMillis(_))
+        val end = OffsetDateTime.parse("2018-01-07T18:20:00+0000", f).pipe(new ZonedDateTimeWithoutMillis(_))
         val interval = Interval(start, end)
 
         val encoded = interval.asJson
@@ -57,7 +59,7 @@ class EncodersTest extends AnyFlatSpec with Matchers {
         val f = DateTimeFormatter.ISO_OFFSET_DATE_TIME
         val uuid1 = UUID.fromString("7cdbd969-4511-4a64-bff1-752786c76f82")
         val uuid2 = UUID.fromString("59e0c9dd-d2e8-424d-b26e-b13d717c5b73")
-        val zdt = ZonedDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
+        val zdt = OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
         val click = Install(uuid1, uuid2, new ZonedDateTimeWithMillis(zdt))
 
         val encoded = click.asJson
@@ -74,14 +76,15 @@ class EncodersTest extends AnyFlatSpec with Matchers {
   
     "Delivery" should "get successfully encoded" in {
         val f = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-        val time = ZonedDateTime.parse("2018-01-07T18:32:34.201100+00:00", f).pipe(new ZonedDateTimeWithMillis(_))
-        val delivery = Delivery(1, 2, time, Chrome, Android, new URL("https://www.foo.com"))
+        val time = OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f).pipe(new ZonedDateTimeWithMillis(_))
+        val advertiseMentId = UUID.fromString("7cdbd969-4511-4a64-bff1-752786c76f82")
+        val delivery = Delivery(1, advertiseMentId, time, Chrome, Android, new URL("https://www.foo.com"))
 
         val encoded = delivery.asJson
         val expectedJson = json"""
         {
           "advertisementId": 1,
-          "deliveryId": 2,
+          "deliveryId": "7cdbd969-4511-4a64-bff1-752786c76f82",
           "time": "2018-01-07T18:32:34.2011Z",
           "browser": "Chrome",
           "os": "Android",

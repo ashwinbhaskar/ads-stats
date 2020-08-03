@@ -1,4 +1,4 @@
-package ads.delivery.json
+package ads.delivery.implicits
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -8,10 +8,10 @@ import io.circe.parser.decode
 import io.circe.generic.auto._
 import scala.util.chaining._
 import java.util.UUID
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.net.URL
-import ads.delivery.json.Decoders._
+import ads.delivery.implicits.Decoders._
 import ads.delivery.adt.Browser
 import ads.delivery.adt._
 import ads.delivery.model.Interval
@@ -35,7 +35,7 @@ class DecodersTest extends AnyFlatSpec with Matchers {
     val decoded = decode[Click](jsonStr)
 
     decoded shouldEqual 
-        Right(Click(uuid1, uuid2, ZonedDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
+        Right(Click(uuid1, uuid2, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
             .pipe(new ZonedDateTimeWithMillis(_))))
   }
 
@@ -52,8 +52,8 @@ class DecodersTest extends AnyFlatSpec with Matchers {
       val decoded = decode[Interval](jsonStr)
 
       decoded shouldEqual
-        Right(Interval(ZonedDateTime.parse(start, f).pipe(new ZonedDateTimeWithoutMillis(_)),
-            ZonedDateTime.parse(end, f).pipe(new ZonedDateTimeWithoutMillis(_))))
+        Right(Interval(OffsetDateTime.parse(start, f).pipe(new ZonedDateTimeWithoutMillis(_)),
+            OffsetDateTime.parse(end, f).pipe(new ZonedDateTimeWithoutMillis(_))))
   }
 
   "Install" should "get successfully decoded" in {
@@ -70,16 +70,17 @@ class DecodersTest extends AnyFlatSpec with Matchers {
     val decoded = decode[Install](jsonStr)
 
     decoded shouldEqual 
-        Right(Install(uuid1, uuid2, ZonedDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
+        Right(Install(uuid1, uuid2, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
             .pipe(new ZonedDateTimeWithMillis(_)))) 
   }
 
   "Delivery" should "get decoded successfully" in {
       val f = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+      val uuid = UUID.randomUUID
       val jsonStr = s"""
       {
           "advertisementId": 1,
-          "deliveryId": 2,
+          "deliveryId": "${uuid.toString}",
           "time": "2018-01-07T18:32:34.201100+00:00",
           "browser": "Chrome",
           "os": "Android",
@@ -89,7 +90,7 @@ class DecodersTest extends AnyFlatSpec with Matchers {
       val decoded = decode[Delivery](jsonStr)
 
       decoded shouldEqual
-        Right(Delivery(1, 2, ZonedDateTime.parse("2018-01-07T18:32:34.201100+00:00", f).pipe(new ZonedDateTimeWithMillis(_)), 
+        Right(Delivery(1, uuid, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f).pipe(new ZonedDateTimeWithMillis(_)), 
             Chrome, Android, new URL("https://www.foo.com")))
   }
 

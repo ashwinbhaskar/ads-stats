@@ -1,4 +1,4 @@
-package ads.delivery.json
+package ads.delivery.implicits
 
 import scala.util.Try
 import scala.util.chaining._
@@ -10,6 +10,7 @@ import java.util.UUID
 import ads.delivery.model.{Interval, Click}
 import ads.delivery.adt.{Browser, ZonedDateTimeWithoutMillis, ZonedDateTimeWithMillis}
 import ads.delivery.adt.OS
+import java.time.OffsetDateTime
 
 object Decoders {
     private val formatterWithoutMillis = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -23,7 +24,7 @@ object Decoders {
             def apply(c: HCursor): Decoder.Result[ZonedDateTimeWithoutMillis] = 
                 for {
                     zonedDateTimeStr <- c.value.as[String]
-                    zonedDateTime <- Try(ZonedDateTime.parse(zonedDateTimeStr, formatterWithoutMillis))
+                    zonedDateTime <- Try(OffsetDateTime.parse(zonedDateTimeStr, formatterWithoutMillis))
                         .pipe(tryToDecodeResult)
                         .map(new ZonedDateTimeWithoutMillis(_))
                 } yield
@@ -35,7 +36,7 @@ object Decoders {
             def apply(c: HCursor): Decoder.Result[ZonedDateTimeWithMillis] = 
                 for {
                     zonedDateTimeStr <- c.value.as[String]
-                    zonedDateTime <- Try(ZonedDateTime.parse(zonedDateTimeStr, formatterWithMillis))
+                    zonedDateTime <- Try(OffsetDateTime.parse(zonedDateTimeStr, formatterWithMillis))
                         .pipe(tryToDecodeResult)
                         .map(new ZonedDateTimeWithMillis(_))
                 } yield
