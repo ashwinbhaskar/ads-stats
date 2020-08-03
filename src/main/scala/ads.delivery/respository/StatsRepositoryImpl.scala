@@ -6,7 +6,6 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.implicits.javatime._
-import doobie.implicits.legacy.instant._
 import cats.effect.IO
 import cats.implicits._
 import ads.delivery.Types
@@ -54,7 +53,19 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
             .redeem(ifException, ifInsertSuccess)
         
     override def getStats(start: ZonedDateTimeWithoutMillis, end: ZonedDateTimeWithoutMillis)
-        : RepoResult[Stats] = ???
+        : RepoResult[Stats] = {
+            val result: IO[Stats] = 
+                for {
+                    deliveries <- sql"SELECT count(*) FROM delivery WHERE t BETWEEN $start AND $end"
+                                    .query[Int].to[List].transact(transactor)
+                    installs <- sql"SELECT count(*) FROM install WHERE t BETWEEN $start AND $end"
+                                    .query[Int].to[List].transact(transactor)
+                    clicks <- sql"SELECT count(*) FROM click WHERE t BETWEEN $start AND $end"
+                                    .query[Int].to[List].transact(transactor)
+                } yield
+                    Stats(deliveries.head, clicks.head, installs.head)
+            result.redeem(e => UnhandledError.asLeft[Stats], stats => stats.asRight[Error])
+        }
     
     override def getStats(start: ZonedDateTimeWithoutMillis, end: ZonedDateTimeWithoutMillis,
         categories: Map[String,String]): RepoResult[List[CategorizedStats]] = ???
