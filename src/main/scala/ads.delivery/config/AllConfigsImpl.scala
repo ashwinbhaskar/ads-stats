@@ -9,8 +9,8 @@ class AllConfigsImpl(config: Config) extends AllConfigs{
   
   override def getPass: String = config.getString("db.password")
   
-  override def getDriverClassName: String = config.getString("db.driver")
+  override def getDriverClassName: String = config.getString("db.driver_class_name")
   
-  override def getMaxThreads: Int = config.getInt("db.thread-pool-size")
+  override def getMaxThreads: Int = config.getInt("db.thread_pool_size")
   
 }
