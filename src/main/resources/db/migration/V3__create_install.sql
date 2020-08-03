@@ -1,0 +1,6 @@
+CREATE TABLE install(
+    id SERIAL PRIMARY KEY,
+    install_id UUID NOT NULL,
+    click_id UUID NOT NULL,
+    t TIMESTAMP WITH TIME ZONE NOT NULL
+)
