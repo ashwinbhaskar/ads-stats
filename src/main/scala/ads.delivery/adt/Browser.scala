@@ -13,6 +13,8 @@ object Browser {
                 case "SAFARI" => Some(Safari)
                 case _ => None
             }
+    def fromStringUnsafe(str: String): Browser = 
+            fromString(str).get
 }
 
 object Chrome extends Browser {

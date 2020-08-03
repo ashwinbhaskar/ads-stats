@@ -12,6 +12,9 @@ object OS {
             case "WINDOWS" => Some(Windows)
             case _ => None
         }
+    
+    def fromStringUnsafe(s: String): OS = 
+        fromString(s).get
 }
 
 object IOS extends OS {
