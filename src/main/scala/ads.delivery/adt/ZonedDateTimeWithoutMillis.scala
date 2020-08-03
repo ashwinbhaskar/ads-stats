@@ -1,5 +1,5 @@
 package ads.delivery.adt
 
-import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 
-class ZonedDateTimeWithoutMillis(val z: ZonedDateTime) extends AnyVal
+class ZonedDateTimeWithoutMillis(val z: OffsetDateTime) extends AnyVal
