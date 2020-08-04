@@ -1,3 +1,5 @@
 package ads.delivery.model
 
-case class CategorizedStats(fields: Map[String, String], stats: Stats)
+import ads.delivery.adt.Category
+
+case class CategorizedStats(fields: Map[Category, String], stats: Stats)

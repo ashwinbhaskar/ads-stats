@@ -1,6 +1,6 @@
 package ads.delivery.model
 
 import java.util.UUID
-import ads.delivery.adt.ZonedDateTimeWithMillis
+import ads.delivery.adt.OffsetDateTimeWithMillis
 
-case class Install(installId: UUID, clickId: UUID, time: ZonedDateTimeWithMillis)
+case class Install(installId: UUID, clickId: UUID, time: OffsetDateTimeWithMillis)

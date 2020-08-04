@@ -3,8 +3,9 @@ package ads.delivery.respository
 import ads.delivery.model._
 import ads.delivery.adt.Error
 import ads.delivery.Types._
-import ads.delivery.adt.ZonedDateTimeWithoutMillis
+import ads.delivery.adt.OffsetDateTimeWithoutMillis
 import cats.effect.IO
+import ads.delivery.adt.Category
 
 trait StatsRepository {
 
@@ -14,9 +15,9 @@ trait StatsRepository {
 
   def recordClick(c: Click): RepoResult[Unit]
 
-  def getStats(start: ZonedDateTimeWithoutMillis, end: ZonedDateTimeWithoutMillis): RepoResult[Stats]
+  def getStats(start: OffsetDateTimeWithoutMillis, end: OffsetDateTimeWithoutMillis): RepoResult[Stats]
 
-  def getStats(start: ZonedDateTimeWithoutMillis, end: ZonedDateTimeWithoutMillis
-    , categories: Map[String, String]): RepoResult[List[CategorizedStats]]
+  def getStats(start: OffsetDateTimeWithoutMillis, end: OffsetDateTimeWithoutMillis
+    , categories: List[Category]): RepoResult[List[CategorizedStats]]
 
 }

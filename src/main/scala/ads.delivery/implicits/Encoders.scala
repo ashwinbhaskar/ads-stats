@@ -10,15 +10,15 @@ object Encoders {
   private val formatterWithoutMillis = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
   private val formatterWithMillis = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-  implicit val encodeZonedDateTimeWithoutMillis: Encoder[ZonedDateTimeWithoutMillis] = 
-    new Encoder[ZonedDateTimeWithoutMillis] {
-        def apply(zdt: ZonedDateTimeWithoutMillis): Json = 
+  implicit val encodeZonedDateTimeWithoutMillis: Encoder[OffsetDateTimeWithoutMillis] = 
+    new Encoder[OffsetDateTimeWithoutMillis] {
+        def apply(zdt: OffsetDateTimeWithoutMillis): Json = 
             Json.fromString(formatterWithoutMillis.format(zdt.z))
     }
   
-  implicit val encodeZonedDateTImeWithMillis: Encoder[ZonedDateTimeWithMillis] = 
-    new Encoder[ZonedDateTimeWithMillis] {
-      def apply(zdt: ZonedDateTimeWithMillis): Json =
+  implicit val encodeZonedDateTImeWithMillis: Encoder[OffsetDateTimeWithMillis] = 
+    new Encoder[OffsetDateTimeWithMillis] {
+      def apply(zdt: OffsetDateTimeWithMillis): Json =
         Json.fromString(formatterWithMillis.format(zdt.z))
     }
 
@@ -44,5 +44,11 @@ object Encoders {
     new Encoder[URL] {
       def apply(a: URL): Json = 
         Json.fromString(a.toExternalForm)
+    }
+
+  implicit val encodeCategory: Encoder[Category] = 
+    new Encoder[Category] {
+      def apply(a: Category): Json =
+        Json.fromString(a.stringRep)
     }
 }

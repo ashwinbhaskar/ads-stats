@@ -3,14 +3,16 @@ package ads.delivery.implicits
 import scala.util.Try
 import scala.util.chaining._
 import io.circe.{Decoder, Json, HCursor, DecodingFailure}
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.net.URL
 import java.util.UUID
 import ads.delivery.model.{Interval, Click}
-import ads.delivery.adt.{Browser, ZonedDateTimeWithoutMillis, ZonedDateTimeWithMillis}
+import ads.delivery.adt.Browser
+import ads.delivery.adt.OffsetDateTimeWithoutMillis
+import ads.delivery.adt.OffsetDateTimeWithMillis
 import ads.delivery.adt.OS
 import java.time.OffsetDateTime
+import ads.delivery.adt.Category
 
 object Decoders {
     private val formatterWithoutMillis = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -19,26 +21,26 @@ object Decoders {
     private def tryToDecodeResult[T](z: Try[T]): Decoder.Result[T] = 
         z.toEither.left.map(e => DecodingFailure(e.getMessage, List.empty))
 
-    implicit val decodeZonedDateTimeWithoutMillis: Decoder[ZonedDateTimeWithoutMillis] = 
-        new Decoder[ZonedDateTimeWithoutMillis]{
-            def apply(c: HCursor): Decoder.Result[ZonedDateTimeWithoutMillis] = 
+    implicit val decodeZonedDateTimeWithoutMillis: Decoder[OffsetDateTimeWithoutMillis] = 
+        new Decoder[OffsetDateTimeWithoutMillis]{
+            def apply(c: HCursor): Decoder.Result[OffsetDateTimeWithoutMillis] = 
                 for {
                     zonedDateTimeStr <- c.value.as[String]
                     zonedDateTime <- Try(OffsetDateTime.parse(zonedDateTimeStr, formatterWithoutMillis))
                         .pipe(tryToDecodeResult)
-                        .map(new ZonedDateTimeWithoutMillis(_))
+                        .map(new OffsetDateTimeWithoutMillis(_))
                 } yield
                     zonedDateTime
         }
 
-    implicit val decodeZonedDateTimeWithMillis: Decoder[ZonedDateTimeWithMillis] = 
-        new Decoder[ZonedDateTimeWithMillis]{
-            def apply(c: HCursor): Decoder.Result[ZonedDateTimeWithMillis] = 
+    implicit val decodeZonedDateTimeWithMillis: Decoder[OffsetDateTimeWithMillis] = 
+        new Decoder[OffsetDateTimeWithMillis]{
+            def apply(c: HCursor): Decoder.Result[OffsetDateTimeWithMillis] = 
                 for {
                     zonedDateTimeStr <- c.value.as[String]
                     zonedDateTime <- Try(OffsetDateTime.parse(zonedDateTimeStr, formatterWithMillis))
                         .pipe(tryToDecodeResult)
-                        .map(new ZonedDateTimeWithMillis(_))
+                        .map(new OffsetDateTimeWithMillis(_))
                 } yield
                     zonedDateTime
         }
@@ -84,5 +86,15 @@ object Decoders {
                     os <- OS.fromString(osString).toRight(DecodingFailure("Invalid OS", List.empty))
                 } yield
                     os
+        }
+
+    implicit val decodeCategory: Decoder[Category] =
+        new Decoder[Category] {
+            def apply(c: HCursor): Decoder.Result[Category] = 
+                for {
+                    categoryString <- c.value.as[String]
+                    category <- Category.fromString(categoryString).toRight(DecodingFailure("Invalid category", List.empty))
+                } yield
+                    category
         }
 }

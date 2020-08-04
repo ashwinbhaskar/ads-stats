@@ -36,7 +36,7 @@ class DecodersTest extends AnyFlatSpec with Matchers {
 
     decoded shouldEqual 
         Right(Click(uuid1, uuid2, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
-            .pipe(new ZonedDateTimeWithMillis(_))))
+            .pipe(new OffsetDateTimeWithMillis(_))))
   }
 
   "Interval" should "get successfully decoded" in {
@@ -52,8 +52,8 @@ class DecodersTest extends AnyFlatSpec with Matchers {
       val decoded = decode[Interval](jsonStr)
 
       decoded shouldEqual
-        Right(Interval(OffsetDateTime.parse(start, f).pipe(new ZonedDateTimeWithoutMillis(_)),
-            OffsetDateTime.parse(end, f).pipe(new ZonedDateTimeWithoutMillis(_))))
+        Right(Interval(OffsetDateTime.parse(start, f).pipe(new OffsetDateTimeWithoutMillis(_)),
+            OffsetDateTime.parse(end, f).pipe(new OffsetDateTimeWithoutMillis(_))))
   }
 
   "Install" should "get successfully decoded" in {
@@ -71,7 +71,7 @@ class DecodersTest extends AnyFlatSpec with Matchers {
 
     decoded shouldEqual 
         Right(Install(uuid1, uuid2, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f)
-            .pipe(new ZonedDateTimeWithMillis(_)))) 
+            .pipe(new OffsetDateTimeWithMillis(_)))) 
   }
 
   "Delivery" should "get decoded successfully" in {
@@ -90,7 +90,7 @@ class DecodersTest extends AnyFlatSpec with Matchers {
       val decoded = decode[Delivery](jsonStr)
 
       decoded shouldEqual
-        Right(Delivery(1, uuid, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f).pipe(new ZonedDateTimeWithMillis(_)), 
+        Right(Delivery(1, uuid, OffsetDateTime.parse("2018-01-07T18:32:34.201100+00:00", f).pipe(new OffsetDateTimeWithMillis(_)), 
             Chrome, Android, new URL("https://www.foo.com")))
   }
 
