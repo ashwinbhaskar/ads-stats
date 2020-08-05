@@ -15,9 +15,6 @@ import java.time.OffsetDateTime
 import ads.delivery.adt.Category
 
 object Decoders {
-  private val formatterWithoutMillis =
-    DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
-  private val formatterWithMillis = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
   private def tryToDecodeResult[T](z: Try[T]): Decoder.Result[T] =
     z.toEither.left.map(e => DecodingFailure(e.getMessage, List.empty))
@@ -29,9 +26,11 @@ object Decoders {
         for {
           zonedDateTimeStr <- c.value.as[String]
           zonedDateTime <-
-            Try(OffsetDateTime.parse(zonedDateTimeStr, formatterWithoutMillis))
-              .pipe(tryToDecodeResult)
-              .map(new OffsetDateTimeWithoutMillis(_))
+            OffsetDateTimeWithoutMillis
+              .fromString(zonedDateTimeStr)
+              .toEither
+              .left
+              .map(e => DecodingFailure(e.getMessage, List.empty))
         } yield zonedDateTime
     }
 
@@ -42,9 +41,11 @@ object Decoders {
         for {
           zonedDateTimeStr <- c.value.as[String]
           zonedDateTime <-
-            Try(OffsetDateTime.parse(zonedDateTimeStr, formatterWithMillis))
-              .pipe(tryToDecodeResult)
-              .map(new OffsetDateTimeWithMillis(_))
+            OffsetDateTimeWithMillis
+              .fromString(zonedDateTimeStr)
+              .toEither
+              .left
+              .map(e => DecodingFailure(e.getMessage, List.empty))
         } yield zonedDateTime
     }
 

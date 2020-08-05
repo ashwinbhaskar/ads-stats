@@ -27,17 +27,17 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
       UnhandledError.asLeft[Unit]
   }
 
-  override def recordDelivery(d: Delivery): RepoResult[Unit] =
+  override def recordDelivery(d: Delivery): IOResult[Unit] =
     sql"INSERT INTO delivery(delivery_id, advertisement_id, t, browser, os, site) VALUES (${d.deliveryId}, ${d.advertisementId},${d.time},${d.browser},${d.os},${d.site})".update.run
       .transact(transactor)
       .redeem(ifException, ifInsertSuccess)
 
-  override def recordInstall(i: Install): RepoResult[Unit] =
+  override def recordInstall(i: Install): IOResult[Unit] =
     sql"INSERT INTO install(install_id, click_id, t) VALUES(${i.installId}, ${i.clickId}, ${i.time})".update.run
       .transact(transactor)
       .redeem(ifException, ifInsertSuccess)
 
-  override def recordClick(c: Click): RepoResult[Unit] =
+  override def recordClick(c: Click): IOResult[Unit] =
     sql"INSERT INTO click(delivery_id, click_id, t) VALUES(${c.deliveryId}, ${c.clickId}, ${c.time})".update.run
       .transact(transactor)
       .redeem(ifException, ifInsertSuccess)
@@ -45,7 +45,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
   override def getStats(
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis
-  ): RepoResult[Stats] = {
+  ): IOResult[Stats] = {
     val result: IO[Stats] =
       for {
         deliveries <-
@@ -74,7 +74,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis,
       categories: List[Category]
-  ): RepoResult[List[CategorizedStats]] = {
+  ): IOResult[List[CategorizedStats]] = {
     val result: IO[List[CategorizedStats]] =
       for {
         deliveries <-
