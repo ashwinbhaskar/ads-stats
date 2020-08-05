@@ -12,6 +12,8 @@ val http4sVersion = "0.21.6"
 lazy val root = (project in file("."))
   .settings(
     name := "ads-delivery",
+    fork := true,
+    cancelable := true,
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
