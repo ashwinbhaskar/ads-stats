@@ -57,7 +57,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
         click <- req.decodeJson[Click]
         r <- repository.recordClick(click)
       } yield r
-      
+
       result.flatMap(toHttpResponse(_, Created()))
 
     case GET -> root / start / end / "overall" =>
