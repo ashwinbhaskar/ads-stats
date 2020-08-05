@@ -12,6 +12,10 @@ class AllConfigsImpl(config: Config) extends AllConfigs {
   override def getDriverClassName: String =
     config.getString("db.driver_class_name")
 
-  override def getMaxThreads: Int = config.getInt("db.thread_pool_size")
+  override def getMaxThreads: Int = config.getInt("db.max_thread_pool")
+
+  override def getPort: Int = config.getInt("server.port")
+
+  override def getHost: String = config.getString("server.host")
 
 }
