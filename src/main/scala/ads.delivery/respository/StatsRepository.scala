@@ -15,9 +15,15 @@ trait StatsRepository {
 
   def recordClick(c: Click): RepoResult[Unit]
 
-  def getStats(start: OffsetDateTimeWithoutMillis, end: OffsetDateTimeWithoutMillis): RepoResult[Stats]
+  def getStats(
+      start: OffsetDateTimeWithoutMillis,
+      end: OffsetDateTimeWithoutMillis
+  ): RepoResult[Stats]
 
-  def getStats(start: OffsetDateTimeWithoutMillis, end: OffsetDateTimeWithoutMillis
-    , categories: List[Category]): RepoResult[List[CategorizedStats]]
+  def getStats(
+      start: OffsetDateTimeWithoutMillis,
+      end: OffsetDateTimeWithoutMillis,
+      categories: List[Category]
+  ): RepoResult[List[CategorizedStats]]
 
 }

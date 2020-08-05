@@ -1,31 +1,31 @@
 package ads.delivery.adt
 
 sealed trait Browser {
-    def stringRep: String
+  def stringRep: String
 }
 
 object Browser {
-    def fromString(str: String): Option[Browser] = 
-            str.toUpperCase match {
-                case "CHROME" => Some(Chrome)
-                case "FIREFOX" => Some(FireFox)
-                case "EDGE" => Some(Edge)
-                case "SAFARI" => Some(Safari)
-                case _ => None
-            }
-    def fromStringUnsafe(str: String): Browser = 
-            fromString(str).get
+  def fromString(str: String): Option[Browser] =
+    str.toUpperCase match {
+      case "CHROME"  => Some(Chrome)
+      case "FIREFOX" => Some(FireFox)
+      case "EDGE"    => Some(Edge)
+      case "SAFARI"  => Some(Safari)
+      case _         => None
+    }
+  def fromStringUnsafe(str: String): Browser =
+    fromString(str).get
 }
 
 object Chrome extends Browser {
-    override def stringRep: String = "Chrome"
+  override def stringRep: String = "Chrome"
 }
 object FireFox extends Browser {
-    override def stringRep: String = "FireFox"
+  override def stringRep: String = "FireFox"
 }
 object Edge extends Browser {
-    override def stringRep: String = "Edge"
+  override def stringRep: String = "Edge"
 }
 object Safari extends Browser {
-    override def stringRep: String = "Safari"
+  override def stringRep: String = "Safari"
 }
