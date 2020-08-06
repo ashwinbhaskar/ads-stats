@@ -21,6 +21,10 @@ object InvalidDateTimeWithMillisFormat extends Error {
     s"Invalid date time format. Correct format: $format"
 }
 
+class JsonDecodingError(msg: String) extends Error {
+  override def message: String = msg
+}
+
 object UnhandledError extends Error {
   override def message: String = "Unhandled Error"
 }
