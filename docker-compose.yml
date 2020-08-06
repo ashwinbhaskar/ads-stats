@@ -1,0 +1,33 @@
+version: '3'
+services:
+  postgres:
+    image: "postgres:12"
+    network_mode: bridge
+    container_name: postgres
+    volumes:
+      - ./docker_data/postgres:/var/lib/postgresql/data
+    environment:
+        POSTGRES_DB: ads_stats
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+    expose:
+      - 5432
+    ports:
+      - 5431:5432
+
+  scala-app:
+    image: ads-stats-app:latest
+    network_mode: bridge
+    container_name: ads-stats-app
+    expose:
+      - 8000
+    ports:
+      - "127.0.0.1:8000:8000"
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    links:
+      - postgres
+
+volumes:
+    postgres-data:
