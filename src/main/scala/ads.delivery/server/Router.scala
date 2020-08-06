@@ -28,16 +28,16 @@ import ads.delivery.adt.InvalidDateTimeWithoutMillisFormat
 
 class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
-  private val root = Root / "ads"
-
-  private val timeBasedStatsPath = root / "statistics" / "time"
-
-  private def collectCategories(p: Path): Either[Error, List[Category]] = 
+  private def collectCategories(p: Path): Either[Error, List[Category]] =
     p match {
-      case parent / child => Category.fromString(child) match {
-        case Some(category) => collectCategories(parent).map(list => category :: list)
-        case None => Left(InvalidCategory) 
-      }
+      case parent / child =>
+        Category.fromString(child) match {
+          case Some(category) =>
+            collectCategories(parent).map(list => category :: list)
+          case None => Left(InvalidCategory)
+          case None => Left(InvalidCategory)
+          case None => Left(InvalidCategory)
+        }
       case Root => Right(List.empty)
     }
 
@@ -50,21 +50,27 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
         t => new JsonDecodingError(t.getCause.getMessage).asLeft[T],
         _.asRight[JsonDecodingError]
       )
-  private def timeDecoder(t: IO[OffsetDateTimeWithoutMillis]): IO[
-    Either[InvalidDateTimeWithoutMillisFormat.type, OffsetDateTimeWithoutMillis]
+  private def decodeTime(t: String): EitherT[
+    IO,
+    InvalidDateTimeWithoutMillisFormat.type,
+    OffsetDateTimeWithoutMillis
   ] =
-    t.redeem(
-      _ =>
-        InvalidDateTimeWithoutMillisFormat.asLeft[OffsetDateTimeWithoutMillis],
-      _.asRight[InvalidDateTimeWithoutMillisFormat.type]
-    )
-  
+    OffsetDateTimeWithoutMillis
+      .fromString(t)
+      .pipe(IO.fromTry)
+      .redeem(
+        _ =>
+          InvalidDateTimeWithoutMillisFormat
+            .asLeft[OffsetDateTimeWithoutMillis],
+        _.asRight[InvalidDateTimeWithoutMillisFormat.type]
+      )
+      .pipe(EitherT.apply)
+
   private def timeDecoder(t: IO[OffsetDateTimeWithMillis]): IO[
     Either[InvalidDateTimeWithMillisFormat.type, OffsetDateTimeWithMillis]
   ] =
     t.redeem(
-      _ =>
-        InvalidDateTimeWithMillisFormat.asLeft[OffsetDateTimeWithMillis],
+      _ => InvalidDateTimeWithMillisFormat.asLeft[OffsetDateTimeWithMillis],
       _.asRight[InvalidDateTimeWithMillisFormat.type]
     )
 
@@ -80,7 +86,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
     }
 
   val routes = HttpRoutes.of[IO] {
-    case req @ POST -> root / "delivery" =>
+    case req @ POST -> Root / "ads" / "delivery" =>
       val result = for {
         delivery <- EitherT(decodeBody[Delivery](req))
         r <- EitherT(repository.recordDelivery(delivery))
@@ -88,7 +94,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
       result.value.flatMap(toHttpResponse(_, Created()))
 
-    case req @ POST -> root / "install" =>
+    case req @ POST -> Root / "ads" / "install" =>
       val result = for {
         install <- EitherT(decodeBody[Install](req))
         r <- EitherT(repository.recordInstall(install))
@@ -96,7 +102,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
       result.value.flatMap(toHttpResponse(_, Created()))
 
-    case req @ POST -> root / "click" =>
+    case req @ POST -> Root / "ads" / "click" =>
       val result = for {
         click <- EitherT(decodeBody[Click](req))
         r <- EitherT(repository.recordClick(click))
@@ -104,43 +110,23 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
       result.value.flatMap(toHttpResponse(_, Created()))
 
-    case GET -> timeBasedStatsPath / start / end / "overall" =>
+    case GET -> Root / "ads" / "statistics" / time / start / end / "overall" =>
       val result = for {
-        startTime <-
-          OffsetDateTimeWithoutMillis
-            .fromString(start)
-            .pipe(IO.fromTry)
-            .pipe(timeDecoder)
-            .pipe(EitherT.apply)
-        endTime <-
-          OffsetDateTimeWithoutMillis
-            .fromString(end)
-            .pipe(IO.fromTry)
-            .pipe(timeDecoder)
-            .pipe(EitherT.apply)
+        startTime <- decodeTime(start)
+        endTime <- decodeTime(end)
         stats <- EitherT(repository.getStats(startTime, endTime))
       } yield stats
 
       result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
 
-    case GET -> timeBasedStatsPath /: start /: end /: categories =>
+    case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories =>
       val result = for {
-        categ <-  EitherT(IO(collectCategories(categories)))
-        startTime <-
-          OffsetDateTimeWithoutMillis
-            .fromString(start)
-            .pipe(IO.fromTry)
-            .pipe(timeDecoder)
-            .pipe(EitherT.apply)
-        endTime <-
-          OffsetDateTimeWithoutMillis
-            .fromString(end)
-            .pipe(IO.fromTry)
-            .pipe(timeDecoder)
-            .pipe(EitherT.apply)
+        categ <- EitherT(IO(collectCategories(categories)))
+        startTime <- decodeTime(start)
+        endTime <- decodeTime(end)
         stats <- EitherT(repository.getStats(startTime, endTime, categ))
       } yield stats
-      
+
       result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
   }
 }
