@@ -1,3 +1,4 @@
 target/
 .bloop/
 .metals/
+docker_data/
