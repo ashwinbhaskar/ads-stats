@@ -19,7 +19,8 @@ An HTTP Server to record ad deliveries, clicks and installs, and query the stati
 - This is a system that only records statistics rather than serve a business usecase. Lot of time cannot be spent per call on this. The API needs to be fast. One more reason for not adding foreign keys. Presence of foreign keys adds the extra time taken to validate the data. This extra time is very small but becomes significant when the scale is huge.
 
 # Improvements
-Given the above assumptions, a NO-SQL database would be a better approach. It would work seamlessly when we add or remove more fields while a SQL database like postgres, would require a schema change for every field added or removed.
+- Given the above assumptions, a NO-SQL database would be a better approach. It would work seamlessly when we add or remove more fields while a SQL database like postgres, would require a schema change for every field added or removed.
+- An even better approach and one that would be apt for this use case would be a time series database
 
 # Setup & Run
 The application along with postgres is dockerized. Execute the following commands to to start the server:
