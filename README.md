@@ -20,3 +20,9 @@ An HTTP Server to record ad deliveries, clicks and installs, and query the stati
 
 # Improvements
 Given the above assumptions, a NO-SQL database would be a better approach. It would work seamlessly when we add or remove more fields while a SQL database like postgres, would require a schema change for every field added or removed.
+
+# Setup & Run
+The application along with postgres is dockerized. Execute the following commands to to start the server:
+1. `make setup` - Will run all the tests and build a fat jar out of it in the target directory. You will need `sbt` in your system for this.
+2. `make run` - Will package postgres and the server into a docker container and expose `127.0.0.1:8080` of the outside world.
+3. Run the `curl` commands in the curl folder of the repo:)
