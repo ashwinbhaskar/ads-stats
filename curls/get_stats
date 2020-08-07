@@ -1,0 +1,2 @@
+curl --request GET \
+  --url 'http://127.0.0.1:8000/ads/statistics/time/2018-01-07T14:30:00+0000/2020-01-07T18:20:00+0000/overall'

@@ -1,0 +1,11 @@
+curl --request POST \
+  --url http://127.0.0.1:8000/ads/delivery \
+  --header 'content-type: application/json' \
+  --data '{
+	"advertisementId": 1,
+	"deliveryId": "8ccad669-4511-4a65-bff1-752786c76f93",
+	"time": "2018-01-07T18:32:34.2011Z",
+	"browser": "Safari",
+	"os": "Android",
+	"site": "https://www.goo.com"
+}'

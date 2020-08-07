@@ -1,0 +1,8 @@
+curl --request POST \
+  --url http://127.0.0.1:8000/ads/click \
+  --header 'content-type: application/json' \
+  --data '{
+            "deliveryId": "7cdbd969-4511-4a64-bff1-752786c76f82",
+            "clickId": "59e0c9dd-d2e8-424d-b26e-b13d717c5b73",
+            "time": "2018-01-07T18:32:34.2011Z"
+}'
