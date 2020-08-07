@@ -26,6 +26,7 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+    command: ["./wait-for-it.sh", "postgres:5432"]
     links:
       - postgres
 
