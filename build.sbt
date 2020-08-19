@@ -4,6 +4,7 @@ ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ashwinbhaskar"
 ThisBuild / organizationName := "example"
+ThisBuild / resolvers += Resolver.bintrayRepo("colisweb", "maven")
 
 val circeVersion = "0.13.0"
 val doobieVersion = "0.8.8"
@@ -33,6 +34,7 @@ lazy val root = (project in file("."))
       ).map(_ % http4sVersion) ++
       Seq(
         "com.typesafe" % "config" % "1.4.0",
-        "org.flywaydb" % "flyway-core" % "6.2.1"
+        "org.flywaydb" % "flyway-core" % "6.2.1",
+        "com.colisweb" %% "scala-opentracing-context" % "2.4.1"
       )
   )
