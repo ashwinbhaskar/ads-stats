@@ -119,7 +119,7 @@ class Router(repository: StatsRepository)(implicit
 
       result.value.flatMap(toHttpResponse(_, Created()))
 
-    case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext=>
+    case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext =>
       val result = for {
         startTime <- decodeTime(start)
         endTime <- decodeTime(end)

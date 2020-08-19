@@ -13,9 +13,10 @@ import com.colisweb.tracing.context.LoggingTracingContext
 object Tracing {
   val tracer: Tracer = ???
 
-  def loggingTraceContextBuilder[F[_]: Sync: Timer]: F[TracingContextBuilder[F]] =
+  def loggingTraceContextBuilder[F[_]: Sync: Timer]
+      : F[TracingContextBuilder[F]] =
     LoggingTracingContext.builder[F]
-  
+
   val tracingContextBuilder: IO[TracingContextBuilder[IO]] =
     OpenTracingContext.builder[IO, Tracer, Span](tracer)
 }

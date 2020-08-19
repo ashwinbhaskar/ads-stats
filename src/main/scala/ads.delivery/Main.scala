@@ -20,8 +20,8 @@ object Main extends IOApp {
     val tsc = ConfigFactory.load
     val configs = new AllConfigsImpl(tsc)
     Migration.migrate(configs)
-  
-    implicit val tracingContext: TracingContextBuilder[IO] = 
+
+    implicit val tracingContext: TracingContextBuilder[IO] =
       Tracing.loggingTraceContextBuilder[IO].unsafeRunSync
     implicit val ec = ExecutionContext.global
     val database = new Database(configs)
