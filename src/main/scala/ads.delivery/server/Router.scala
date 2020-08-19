@@ -9,6 +9,7 @@ import io.circe.generic.auto._
 import io.circe.Encoder
 import io.circe.Decoder
 import io.circe.syntax._
+import org.http4s.dsl.io._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.headers.{Location, `Content-Type`}
@@ -25,8 +26,15 @@ import ads.delivery.adt._
 import ads.delivery.Types._
 import ads.delivery.adt.{UnhandledError, JsonDecodingError}
 import ads.delivery.adt.InvalidDateTimeWithoutMillisFormat
+import com.colisweb.tracing.core.TracingContextBuilder
+import com.colisweb.tracing.http.server.TracedHttpRoutes
+import com.colisweb.tracing.http.server.TracedHttpRoutes._
+import com.colisweb.tracing.http.server.TracedRequest
+import com.colisweb.tracing.core.implicits._
 
-class Router(repository: StatsRepository) extends Http4sDsl[IO] {
+class Router(repository: StatsRepository)(implicit
+    val tracingContext: TracingContextBuilder[IO]
+) extends Http4sDsl[IO] {
 
   private def collectCategories(p: Path): Either[Error, List[Category]] =
     p match {
@@ -85,16 +93,17 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
       case Right(data) => successResponse
     }
 
-  val routes = HttpRoutes.of[IO] {
-    case req @ POST -> Root / "ads" / "delivery" =>
+  val routes = TracedHttpRoutes[IO] {
+    case (req @ POST -> Root / "ads" / "delivery") using tracingContext =>
       val result = for {
         delivery <- EitherT(decodeBody[Delivery](req))
         r <- EitherT(repository.recordDelivery(delivery))
       } yield r
 
-      result.value.flatMap(toHttpResponse(_, Created()))
+      val wrapped = tracingContext.span("Record delivery").wrap(result.value)
+      wrapped.flatMap(toHttpResponse(_, Created()))
 
-    case req @ POST -> Root / "ads" / "install" =>
+    case (req @ POST -> Root / "ads" / "install") using tracingContext =>
       val result = for {
         install <- EitherT(decodeBody[Install](req))
         r <- EitherT(repository.recordInstall(install))
@@ -102,7 +111,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
       result.value.flatMap(toHttpResponse(_, Created()))
 
-    case req @ POST -> Root / "ads" / "click" =>
+    case (req @ POST -> Root / "ads" / "click") using tracingContext =>
       val result = for {
         click <- EitherT(decodeBody[Click](req))
         r <- EitherT(repository.recordClick(click))
@@ -110,7 +119,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
       result.value.flatMap(toHttpResponse(_, Created()))
 
-    case GET -> Root / "ads" / "statistics" / time / start / end / "overall" =>
+    case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext=>
       val result = for {
         startTime <- decodeTime(start)
         endTime <- decodeTime(end)
@@ -119,7 +128,7 @@ class Router(repository: StatsRepository) extends Http4sDsl[IO] {
 
       result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
 
-    case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories =>
+    case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories using tracingContext =>
       val result = for {
         categ <- EitherT(IO(collectCategories(categories)))
         startTime <- decodeTime(start)
