@@ -10,6 +10,9 @@ import ads.delivery.server.Server
 import ads.delivery.config.AllConfigsImpl
 import ads.delivery.respository.Migration
 import ads.delivery.respository.Database
+import ads.delivery.util.Tracing
+import com.colisweb.tracing.core.TracingContextBuilder
+import cats.effect.Timer
 
 object Main extends IOApp {
 
@@ -17,7 +20,9 @@ object Main extends IOApp {
     val tsc = ConfigFactory.load
     val configs = new AllConfigsImpl(tsc)
     Migration.migrate(configs)
-
+  
+    implicit val tracingContext: TracingContextBuilder[IO] = 
+      Tracing.loggingTraceContextBuilder[IO].unsafeRunSync
     implicit val ec = ExecutionContext.global
     val database = new Database(configs)
     database.getTransactor.use { t: HikariTransactor[IO] =>
