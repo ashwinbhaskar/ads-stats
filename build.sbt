@@ -39,6 +39,7 @@ lazy val root = (project in file("."))
       ).map(_ % scalaTracingVersion) ++ 
       Seq(
         "com.typesafe" % "config" % "1.4.0",
-        "org.flywaydb" % "flyway-core" % "6.2.1"
+        "org.flywaydb" % "flyway-core" % "6.2.1",
+        "ch.qos.logback" % "logback-classic" % "1.2.3"
       )
   )
