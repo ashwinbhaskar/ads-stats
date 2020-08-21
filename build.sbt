@@ -40,6 +40,7 @@ lazy val root = (project in file("."))
       Seq(
         "com.typesafe" % "config" % "1.4.0",
         "org.flywaydb" % "flyway-core" % "6.2.1",
-        "ch.qos.logback" % "logback-classic" % "1.2.3"
+        "ch.qos.logback" % "logback-classic" % "1.2.3",
+        "io.jaegertracing" % "jaeger-client" % "1.3.2"
       )
   )
