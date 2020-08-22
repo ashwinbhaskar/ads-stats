@@ -21,10 +21,16 @@ object Tracing {
       : F[TracingContextBuilder[F]] =
     LoggingTracingContext.builder[F]
 
-  def jaegarTracincContext[F[_]: Timer: Sync](tracerConfig: TracingConfig): F[TracingContextBuilder[F]] = {
-    val senderConfiguration = (new SenderConfiguration).withAgentHost(tracerConfig.getAgentHost).withAgentPort(tracerConfig.getAgentPort)
-    val reporterConfiguration = (new ReporterConfiguration).withSender(senderConfiguration)
-    val configuration = new Configuration(tracerConfig.getServiceName).withReporter(reporterConfiguration)
+  def jaegarTracingContext[F[_]: Timer: Sync](
+      tracerConfig: TracingConfig
+  ): F[TracingContextBuilder[F]] = {
+    val senderConfiguration = (new SenderConfiguration)
+      .withAgentHost(tracerConfig.getAgentHost)
+      .withAgentPort(tracerConfig.getAgentPort)
+    val reporterConfiguration =
+      (new ReporterConfiguration).withSender(senderConfiguration)
+    val configuration = new Configuration(tracerConfig.getServiceName)
+      .withReporter(reporterConfiguration)
     val tracer: Tracer = configuration.getTracer
     OpenTracingContext.builder[F, Tracer, Span](tracer)
   }
