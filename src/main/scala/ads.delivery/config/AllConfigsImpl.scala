@@ -18,4 +18,9 @@ class AllConfigsImpl(config: Config) extends AllConfigs {
 
   override def getHost: String = config.getString("server.host")
 
+  override def getServiceName: String = config.getString("tracer.service")
+
+  override def getAgentHost: String = config.getString("tracer.agent.host")
+
+  override def getAgentPort: Int = config.getInt("tracer.agent.port")
 }

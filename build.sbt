@@ -4,10 +4,12 @@ ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ashwinbhaskar"
 ThisBuild / organizationName := "example"
+ThisBuild / resolvers += Resolver.bintrayRepo("colisweb", "maven")
 
 val circeVersion = "0.13.0"
 val doobieVersion = "0.8.8"
 val http4sVersion = "0.21.6"
+val scalaTracingVersion = "2.4.1"
 
 lazy val root = (project in file("."))
   .settings(
@@ -32,7 +34,13 @@ lazy val root = (project in file("."))
         "org.http4s" %% "http4s-circe"
       ).map(_ % http4sVersion) ++
       Seq(
+         "com.colisweb" %% "scala-opentracing-context",
+         "com.colisweb" %% "scala-opentracing-http4s-server-tapir"
+      ).map(_ % scalaTracingVersion) ++ 
+      Seq(
         "com.typesafe" % "config" % "1.4.0",
-        "org.flywaydb" % "flyway-core" % "6.2.1"
+        "org.flywaydb" % "flyway-core" % "6.2.1",
+        "ch.qos.logback" % "logback-classic" % "1.2.3",
+        "io.jaegertracing" % "jaeger-client" % "1.3.2"
       )
   )

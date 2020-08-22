@@ -1,3 +1,3 @@
 package ads.delivery.config
 
-trait AllConfigs extends DBConfig with ServerConfig
+trait AllConfigs extends DBConfig with ServerConfig with TracingConfig

@@ -26,7 +26,8 @@ class JsonDecodingError(msg: String) extends Error {
 }
 
 object InvalidCategory extends Error {
-  override def message: String = "Invalid category. Allowed categories are OS, Browser "
+  override def message: String =
+    "Invalid category. Allowed categories are OS, Browser "
 }
 
 object UnhandledError extends Error {

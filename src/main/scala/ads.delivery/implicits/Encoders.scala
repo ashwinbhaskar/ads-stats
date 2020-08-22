@@ -69,10 +69,10 @@ object Encoders {
           case Right(data) => data.asJson
         }
     }
-  
-  implicit val categoryMapEncoder: Encoder[Map[Category, String]] = 
+
+  implicit val categoryMapEncoder: Encoder[Map[Category, String]] =
     new Encoder[Map[Category, String]] {
-      def apply(a: Map[Category,String]): Json = 
+      def apply(a: Map[Category, String]): Json =
         a.map {
           case (key, value) => (key.stringRep, value)
         }.pipe(Encoder[Map[String, String]].apply)
