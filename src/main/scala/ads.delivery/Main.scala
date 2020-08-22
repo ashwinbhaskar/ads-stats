@@ -22,7 +22,7 @@ object Main extends IOApp {
     Migration.migrate(configs)
 
     implicit val tracingContext: TracingContextBuilder[IO] =
-      Tracing.loggingTraceContextBuilder[IO].unsafeRunSync
+      Tracing.jaegarTracingContext[IO](configs).unsafeRunSync
     implicit val ec = ExecutionContext.global
     val database = new Database(configs)
     database.getTransactor.use { t: HikariTransactor[IO] =>
