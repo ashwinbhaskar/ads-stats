@@ -12,6 +12,7 @@ import ads.delivery.Types._
 import ads.delivery.model.{Stats, Install, Delivery, Click, CategorizedStats}
 import ads.delivery.implicits.DbConverters._
 import java.time.OffsetDateTime
+import com.colisweb.tracing.core.TracingContext
 
 class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
 
@@ -27,25 +28,39 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
       UnhandledError.asLeft[Unit]
   }
 
-  override def recordDelivery(d: Delivery): IOResult[Unit] =
-    sql"INSERT INTO delivery(delivery_id, advertisement_id, t, browser, os, site) VALUES (${d.deliveryId}, ${d.advertisementId},${d.time},${d.browser},${d.os},${d.site})".update.run
-      .transact(transactor)
-      .redeem(ifException, ifInsertSuccess)
+  override def recordDelivery(
+      d: Delivery
+  )(implicit tracingContext: TracingContext[IO]): IOResult[Unit] =
+    tracingContext.span("Insert Delivery") use { _ =>
+      sql"INSERT INTO delivery(delivery_id, advertisement_id, t, browser, os, site) VALUES (${d.deliveryId}, ${d.advertisementId},${d.time},${d.browser},${d.os},${d.site})".update.run
+        .transact(transactor)
+        .redeem(ifException, ifInsertSuccess)
+    }
 
-  override def recordInstall(i: Install): IOResult[Unit] =
-    sql"INSERT INTO install(install_id, click_id, t) VALUES(${i.installId}, ${i.clickId}, ${i.time})".update.run
+  override def recordInstall(i: Install)(implicit
+      tracingContext: TracingContext[IO]
+  ): IOResult[Unit] =
+    tracingContext.span("Insert Install") use {  _ =>
+      sql"INSERT INTO install(install_id, click_id, t) VALUES(${i.installId}, ${i.clickId}, ${i.time})".update.run
       .transact(transactor)
       .redeem(ifException, ifInsertSuccess)
+  }
 
-  override def recordClick(c: Click): IOResult[Unit] =
-    sql"INSERT INTO click(delivery_id, click_id, t) VALUES(${c.deliveryId}, ${c.clickId}, ${c.time})".update.run
+  override def recordClick(c: Click)(implicit
+      tracingContext: TracingContext[IO]
+  ): IOResult[Unit] =
+    tracingContext.span("Insert Click") use { _ => 
+      sql"INSERT INTO click(delivery_id, click_id, t) VALUES(${c.deliveryId}, ${c.clickId}, ${c.time})".update.run
       .transact(transactor)
       .redeem(ifException, ifInsertSuccess)
+    }
 
   override def getStats(
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis
-  ): IOResult[Stats] = {
+  )(implicit
+      tracingContext: TracingContext[IO]
+  ): IOResult[Stats] = tracingContext.span("Get Stats") use{ _ => 
     val result: IO[Stats] =
       for {
         deliveries <-
@@ -74,7 +89,9 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis,
       categories: List[Category]
-  ): IOResult[List[CategorizedStats]] = {
+  )(implicit
+      tracingContext: TracingContext[IO]
+  ): IOResult[List[CategorizedStats]] = tracingContext.span("Get Categorized Stats") use{ _ =>
     val result: IO[List[CategorizedStats]] =
       for {
         deliveries <-

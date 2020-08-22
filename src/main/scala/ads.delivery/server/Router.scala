@@ -95,7 +95,7 @@ class Router(repository: StatsRepository)(implicit
     case (req @ POST -> Root / "ads" / "delivery") using tracingContext =>
       val result = for {
         delivery <- EitherT(decodeBody[Delivery](req))
-        r <- EitherT(repository.recordDelivery(delivery))
+        r <- EitherT(repository.recordDelivery(delivery)(tracingContext))
       } yield r
 
       val wrapped = tracingContext.span("Record delivery").wrap(result.value)
@@ -104,36 +104,40 @@ class Router(repository: StatsRepository)(implicit
     case (req @ POST -> Root / "ads" / "install") using tracingContext =>
       val result = for {
         install <- EitherT(decodeBody[Install](req))
-        r <- EitherT(repository.recordInstall(install))
+        r <- EitherT(repository.recordInstall(install)(tracingContext))
       } yield r
 
-      result.value.flatMap(toHttpResponse(_, Created()))
+      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      wrapped.flatMap(toHttpResponse(_, Created()))
 
     case (req @ POST -> Root / "ads" / "click") using tracingContext =>
       val result = for {
         click <- EitherT(decodeBody[Click](req))
-        r <- EitherT(repository.recordClick(click))
+        r <- EitherT(repository.recordClick(click)(tracingContext))
       } yield r
 
-      result.value.flatMap(toHttpResponse(_, Created()))
+      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      wrapped.flatMap(toHttpResponse(_, Created()))
 
     case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext =>
       val result = for {
         startTime <- decodeTime(start)
         endTime <- decodeTime(end)
-        stats <- EitherT(repository.getStats(startTime, endTime))
+        stats <- EitherT(repository.getStats(startTime, endTime)(tracingContext))
       } yield stats
 
-      result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
+      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      wrapped.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
 
     case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories using tracingContext =>
       val result = for {
         categ <- EitherT(IO(collectCategories(categories)))
         startTime <- decodeTime(start)
         endTime <- decodeTime(end)
-        stats <- EitherT(repository.getStats(startTime, endTime, categ))
+        stats <- EitherT(repository.getStats(startTime, endTime, categ)(tracingContext))
       } yield stats
 
-      result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
+      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      wrapped.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
   }
 }
