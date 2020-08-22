@@ -43,8 +43,6 @@ class Router(repository: StatsRepository)(implicit
           case Some(category) =>
             collectCategories(parent).map(list => category :: list)
           case None => Left(InvalidCategory)
-          case None => Left(InvalidCategory)
-          case None => Left(InvalidCategory)
         }
       case Root => Right(List.empty)
     }
