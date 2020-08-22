@@ -116,7 +116,7 @@ class Router(repository: StatsRepository)(implicit
         r <- EitherT(repository.recordClick(click)(tracingContext))
       } yield r
 
-      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      val wrapped = tracingContext.span("Record Click").wrap(result.value)
       wrapped.flatMap(toHttpResponse(_, Created()))
 
     case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext =>
@@ -127,7 +127,7 @@ class Router(repository: StatsRepository)(implicit
           EitherT(repository.getStats(startTime, endTime)(tracingContext))
       } yield stats
 
-      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      val wrapped = tracingContext.span("Stats").wrap(result.value)
       wrapped.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
 
     case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories using tracingContext =>
@@ -140,7 +140,7 @@ class Router(repository: StatsRepository)(implicit
         )
       } yield stats
 
-      val wrapped = tracingContext.span("Record Install").wrap(result.value)
+      val wrapped = tracingContext.span("Categorized Stats").wrap(result.value)
       wrapped.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
   }
 }
