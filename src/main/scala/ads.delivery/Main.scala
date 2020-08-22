@@ -25,6 +25,7 @@ object Main extends IOApp {
       Tracing.jaegarTracingContext[IO](configs).unsafeRunSync
     implicit val ec = ExecutionContext.global
     val database = new Database(configs)
+
     database.getTransactor.use { t: HikariTransactor[IO] =>
       val statsRepository = new StatsRepositoryImpl(t)
       val routes = new Router(statsRepository).routes

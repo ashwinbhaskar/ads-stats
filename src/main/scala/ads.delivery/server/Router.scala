@@ -123,7 +123,8 @@ class Router(repository: StatsRepository)(implicit
       val result = for {
         startTime <- decodeTime(start)
         endTime <- decodeTime(end)
-        stats <- EitherT(repository.getStats(startTime, endTime)(tracingContext))
+        stats <-
+          EitherT(repository.getStats(startTime, endTime)(tracingContext))
       } yield stats
 
       val wrapped = tracingContext.span("Record Install").wrap(result.value)
@@ -134,7 +135,9 @@ class Router(repository: StatsRepository)(implicit
         categ <- EitherT(IO(collectCategories(categories)))
         startTime <- decodeTime(start)
         endTime <- decodeTime(end)
-        stats <- EitherT(repository.getStats(startTime, endTime, categ)(tracingContext))
+        stats <- EitherT(
+          repository.getStats(startTime, endTime, categ)(tracingContext)
+        )
       } yield stats
 
       val wrapped = tracingContext.span("Record Install").wrap(result.value)
