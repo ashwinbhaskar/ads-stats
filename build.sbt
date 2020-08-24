@@ -11,9 +11,19 @@ val doobieVersion = "0.8.8"
 val http4sVersion = "0.21.6"
 val scalaTracingVersion = "2.4.1"
 
+lazy val perfTest = (project in file("perf-test"))
+  .settings(
+    name := "ads-stats-perf-test",
+    cancelable := true,
+    libraryDependencies ++= Seq(
+      "com.lihaoyi" %% "requests" % "0.6.5",
+      "com.github.pureconfig" %% "pureconfig" % "0.13.0"
+    )
+  )
+
 lazy val root = (project in file("."))
   .settings(
-    name := "ads-delivery",
+    name := "ads-stats",
     fork := true,
     cancelable := true,
     libraryDependencies ++= Seq(
