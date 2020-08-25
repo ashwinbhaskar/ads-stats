@@ -5,6 +5,12 @@ ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ashwinbhaskar"
 ThisBuild / organizationName := "example"
 ThisBuild / resolvers += Resolver.bintrayRepo("colisweb", "maven")
+assemblyMergeStrategy in assembly := {
+  case "module-info.class" => MergeStrategy.discard
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
 
 val circeVersion = "0.13.0"
 val doobieVersion = "0.8.8"
