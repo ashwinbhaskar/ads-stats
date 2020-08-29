@@ -9,6 +9,9 @@ import doobie.util.transactor.Transactor.Aux
 import doobie.implicits._
 import doobie.util.fragment.Fragment
 import cats.effect.{IO, ContextShift}
+import cats.effect.Timer
+import cats.effect.implicits._
+import cats.effect.Bracket
 import com.typesafe.config.ConfigFactory
 import java.net.URL
 import java.util.UUID
@@ -20,6 +23,11 @@ import java.time.format.DateTimeFormatter
 import ads.delivery.adt.OffsetDateTimeWithMillis
 import ads.delivery.model.{Install, Click, Delivery, Stats}
 import ads.delivery.model.CategorizedStats
+import ads.delivery.util.Tracing
+import ads.delivery.Types._
+import com.colisweb.tracing.core.TracingContext
+import com.colisweb.tracing.core.TracingContextBuilder
+import com.colisweb.tracing.core.implicits._
 
 class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
 
@@ -29,6 +37,12 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
 
   implicit val ioContextShift: ContextShift[IO] =
     IO.contextShift(global)
+
+  implicit val timer: Timer[IO] =
+    IO.timer(global)
+
+  val tracingContextBuilder: TracingContextBuilder[IO] =
+    Tracing.noOpTracingContext[IO].unsafeRunSync
 
   private def timeWithoutMS(t: String): OffsetDateTimeWithoutMillis =
     OffsetDateTime
@@ -68,9 +82,13 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val delivery = Delivery(1, deliveryId, time, Chrome, Android, site)
 
-    repository.recordDelivery(delivery).unsafeRunSync shouldBe ('Right)
-
-    repository.recordDelivery(delivery).unsafeRunSync shouldEqual Left(
+    val resource = tracingContextBuilder.build("foo-operation")
+    resource
+      .use[IO, Result[Unit]](tr => repository.recordDelivery(delivery)(tr))
+      .unsafeRunSync shouldBe ('Right)
+    resource
+      .use[IO, Result[Unit]](tr => repository.recordDelivery(delivery)(tr))
+      .unsafeRunSync shouldEqual Left(
       AlreadyRecorded
     )
   }
@@ -82,7 +100,10 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val install = Install(installId, clickId, time)
 
-    repository.recordInstall(install).unsafeRunSync should be('Right)
+    val resource = tracingContextBuilder.build("foo-operation")
+    resource
+      .use[IO, Result[Unit]](tr => repository.recordInstall(install)(tr))
+      .unsafeRunSync should be('Right)
   }
 
   "Recording a click" should "be successfull" in withTransactor { t =>
@@ -92,7 +113,10 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val click = Click(deliveryId, clickId, time)
 
-    repository.recordClick(click).unsafeRunSync should be('Right)
+    val resource = tracingContextBuilder.build("foo-operation")
+    resource
+      .use[IO, Result[Unit]](tr => repository.recordClick(click)(tr))
+      .unsafeRunSync should be('Right)
   }
 
   "Recorded stats" should "be given out successfully" in withTransactor { t =>
@@ -117,7 +141,13 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         new URL("http://goo.com")
       )
     )
-    deliveries.foreach { d => repository.recordDelivery(d).unsafeRunSync }
+
+    val resource = tracingContextBuilder.build("foo-operation")
+    deliveries.foreach(d =>
+      resource
+        .use[IO, Result[Unit]](tr => repository.recordDelivery(d)(tr))
+        .unsafeRunSync
+    )
 
     val clickId1 = UUID.fromString("4b7beeae-39d1-4207-a687-c173f9b09d3a")
     val clickId2 = UUID.fromString("4b7beeae-39d1-4207-a687-c173f9b09d4a")
@@ -133,7 +163,11 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         timeWithMS("2019-01-07T18:32:34.201100+00:00")
       )
     )
-    clicks.foreach { c => repository.recordClick(c).unsafeRunSync }
+    clicks.foreach { c =>
+      resource
+        .use[IO, Result[Unit]](tr => repository.recordClick(c)(tr))
+        .unsafeRunSync
+    }
 
     val installId1 = UUID.fromString("4b7beeae-39d1-4207-a687-c174f8b00d2b")
     val installId2 = UUID.fromString("4b7beeae-39d1-5207-a687-c174f8b00d2b")
@@ -149,12 +183,18 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         timeWithMS("2020-08-07T18:32:34.201100+00:00")
       )
     )
-    installs.foreach { i => repository.recordInstall(i).unsafeRunSync }
+    installs.foreach { i =>
+      resource
+        .use[IO, Result[Unit]](tr => repository.recordInstall(i)(tr))
+        .unsafeRunSync
+    }
 
     val start = timeWithoutMS("2018-01-07T14:30:00+0000")
     val end = timeWithoutMS("2019-05-07T14:30:00+0000")
 
-    repository.getStats(start, end).unsafeRunSync shouldEqual Right(
+    resource
+      .use[IO, Result[Stats]](tr => repository.getStats(start, end)(tr))
+      .unsafeRunSync shouldEqual Right(
       Stats(1, 1, 1)
     )
   }
@@ -181,7 +221,12 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         new URL("http://goo.com")
       )
     )
-    deliveries.foreach { d => repository.recordDelivery(d).unsafeRunSync }
+    val resource = tracingContextBuilder.build("foo-operation")
+    deliveries.foreach(d =>
+      resource
+        .use[IO, Result[Unit]](tr => repository.recordDelivery(d)(tr))
+        .unsafeRunSync
+    )
 
     val clickId1 = UUID.fromString("4b7beeae-39d1-4207-a687-c173f9b09d3a")
     val clickId2 = UUID.fromString("4b7beeae-39d1-4207-a687-c173f9b09d4a")
@@ -197,7 +242,11 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         timeWithMS("2019-01-07T18:32:34.201100+00:00")
       )
     )
-    clicks.foreach { c => repository.recordClick(c).unsafeRunSync }
+    clicks.foreach { c =>
+      resource
+        .use[IO, Result[Unit]](tr => repository.recordClick(c)(tr))
+        .unsafeRunSync
+    }
 
     val installId1 = UUID.fromString("4b7beeae-39d1-4207-a687-c174f8b00d2b")
     val installId2 = UUID.fromString("4b7beeae-39d1-5207-a687-c174f8b00d2b")
@@ -213,7 +262,11 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         timeWithMS("2020-08-07T18:32:34.201100+00:00")
       )
     )
-    installs.foreach { i => repository.recordInstall(i).unsafeRunSync }
+    installs.foreach { i =>
+      resource
+        .use[IO, Result[Unit]](tr => repository.recordInstall(i)(tr))
+        .unsafeRunSync
+    }
 
     val start = timeWithoutMS("2017-01-07T14:30:00+0000")
     val end = timeWithoutMS("2021-05-07T14:30:00+0000")
@@ -222,8 +275,11 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       CategorizedStats(Map(OSCategory -> "IOS"), Stats(1, 1, 1)),
       CategorizedStats(Map(OSCategory -> "Android"), Stats(1, 1, 1))
     )
-    repository
-      .getStats(start, end, List(OSCategory))
+    resource
+      .use[IO, Result[List[CategorizedStats]]](tr =>
+        repository
+          .getStats(start, end, List(OSCategory))(tr)
+      )
       .unsafeRunSync
       .map(_.toSet) shouldEqual Right(expected)
   }
