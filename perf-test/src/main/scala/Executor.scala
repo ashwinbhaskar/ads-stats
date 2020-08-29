@@ -9,11 +9,11 @@ object Executor {
       badRequestPercentage: Float,
       fetchToInsertRatio: Float,
       preRequisite: PreRequisite
-): Unit = {
+  ): Unit = {
     prepare(preRequisite)
     val now = LocalTime.now
     val endTime = now.plusSeconds(timeToRunInSeconds)
-    while(!LocalTime.now.isAfter(endTime)) {
+    while (!LocalTime.now.isAfter(endTime)) {
       val host = "http://127.0.0.1:8000"
       val recordDeliveryUrl = s"$host/ads/delivery"
       val recordInstallUrl = s"$host/ads/install"
@@ -25,6 +25,6 @@ object Executor {
 
   private def prepare(preRequisite: PreRequisite): Unit = {
     Gen.frequency((1 -> Generator.delivery))
-    
+
   }
 }

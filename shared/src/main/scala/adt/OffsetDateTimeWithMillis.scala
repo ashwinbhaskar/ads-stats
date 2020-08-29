@@ -12,8 +12,9 @@ object OffsetDateTimeWithMillis {
   def fromString(s: String): Try[OffsetDateTimeWithMillis] =
     Try(OffsetDateTime.parse(s, formatterWithMillis))
       .map(o => OffsetDateTimeWithMillis(o))
-  
-  def fromEpochSeconds(epoch: Long): OffsetDateTimeWithMillis = 
-    OffsetDateTime.ofInstant(Instant.ofEpochSecond(epoch), ZoneId.systemDefault)
+
+  def fromEpochSeconds(epoch: Long): OffsetDateTimeWithMillis =
+    OffsetDateTime
+      .ofInstant(Instant.ofEpochSecond(epoch), ZoneId.systemDefault)
       .pipe(OffsetDateTimeWithMillis.apply)
 }
