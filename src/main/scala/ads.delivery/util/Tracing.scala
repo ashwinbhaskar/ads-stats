@@ -10,6 +10,7 @@ import com.colisweb.tracing.context._
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.colisweb.tracing.context.OpenTracingContext
 import com.colisweb.tracing.context.LoggingTracingContext
+import com.colisweb.tracing.context.NoOpTracingContext
 import ads.delivery.config.TracingConfig
 import io.jaegertracing.Configuration.ReporterConfiguration
 import io.jaegertracing.spi.Reporter
@@ -34,4 +35,7 @@ object Tracing {
     val tracer: Tracer = configuration.getTracer
     OpenTracingContext.builder[F, Tracer, Span](tracer)
   }
+
+  def noOpTracingContext[F[_]: Timer: Sync]: F[TracingContextBuilder[F]] =
+    NoOpTracingContext.builder[F]
 }
