@@ -23,8 +23,14 @@ lazy val perfTest = (project in file("perf-test"))
     cancelable := true,
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "requests" % "0.6.5",
-      "com.github.pureconfig" %% "pureconfig" % "0.13.0"
+      "com.github.pureconfig" %% "pureconfig" % "0.13.0",
+      "org.scalacheck" %% "scalacheck" % "1.14.1"
     )
+  ).dependsOn(shared)
+
+lazy val shared = (project in file("shared"))
+  .settings(
+    name := "shared"
   )
 
 lazy val root = (project in file("."))
@@ -32,6 +38,7 @@ lazy val root = (project in file("."))
     name := "ads-stats",
     fork := true,
     cancelable := true,
+
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
@@ -59,4 +66,4 @@ lazy val root = (project in file("."))
         "ch.qos.logback" % "logback-classic" % "1.2.3",
         "io.jaegertracing" % "jaeger-client" % "1.3.2"
       )
-  )
+  ).dependsOn(shared)
