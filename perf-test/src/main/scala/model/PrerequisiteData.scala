@@ -1,3 +1,3 @@
 package model
 
-case class PreRequisite(deliveries: Long, clicks: Long, installs: Long)
+case class PreRequisite(deliveries: Int, deliveriesToClicksRatio: Float, clicksToInstallsRatio: Float)

@@ -1,6 +1,14 @@
-import java.time.LocalTime
 import model.PreRequisite
 import org.scalacheck.Gen
+import org.scalacheck.Prop.forAll
+import ads.delivery.model.Delivery
+import java.{util => ju}
+import java.time.LocalTime
+import org.scalacheck.Gen.Parameters
+import org.scalacheck.rng.Seed
+import ads.delivery.model.Click
+import scala.util.chaining._
+import ads.delivery.model.Install
 
 object Executor {
   def execute(
@@ -10,7 +18,6 @@ object Executor {
       fetchToInsertRatio: Float,
       preRequisite: PreRequisite
   ): Unit = {
-    prepare(preRequisite)
     val now = LocalTime.now
     val endTime = now.plusSeconds(timeToRunInSeconds)
     while (!LocalTime.now.isAfter(endTime)) {
@@ -21,10 +28,5 @@ object Executor {
       val getStats = s"$host/ads/statistics/time/%s/%s/overall"
       val getCategorizedStats = s"$host/ads/statistics/time/%s/%s/%s"
     }
-  }
-
-  private def prepare(preRequisite: PreRequisite): Unit = {
-    Gen.frequency((1 -> Generator.delivery))
-
   }
 }
