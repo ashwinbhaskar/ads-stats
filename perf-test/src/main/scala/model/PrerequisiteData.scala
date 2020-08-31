@@ -1,3 +1,7 @@
 package model
 
-case class PreRequisite(deliveries: Int, deliveriesToClicksRatio: Float, clicksToInstallsRatio: Float)
+case class PreRequisite(
+    deliveries: Int,
+    deliveriesToClicksRatio: Float,
+    clicksToInstallsRatio: Float
+)

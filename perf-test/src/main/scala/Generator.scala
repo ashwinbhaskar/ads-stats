@@ -25,15 +25,15 @@ object Generator {
       os <- Gen.oneOf[OS](OS.all)
       site <- url
     } yield Delivery(id, deliveryId, time, browser, os, site)
-  
-  def click(deliveryId: ju.UUID): Gen[Click] = 
+
+  def click(deliveryId: ju.UUID): Gen[Click] =
     for {
       deliveryId <- Gen.const[ju.UUID](deliveryId)
       clickId <- Gen.uuid
       time <- Gen.posNum[Long].map(OffsetDateTimeWithMillis.fromEpochSeconds)
     } yield Click(deliveryId, clickId, time)
 
-  def install(clickId: ju.UUID): Gen[Install] = 
+  def install(clickId: ju.UUID): Gen[Install] =
     for {
       clickId <- Gen.const[ju.UUID](clickId)
       installId <- Gen.uuid
