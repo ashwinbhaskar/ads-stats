@@ -23,8 +23,10 @@ lazy val perfTest = (project in file("perf-test"))
     cancelable := true,
     libraryDependencies ++= Seq(
       "com.lihaoyi" %% "requests" % "0.6.5",
+      "com.lihaoyi" %% "upickle" % "0.9.5",
       "com.github.pureconfig" %% "pureconfig" % "0.13.0",
-      "org.scalacheck" %% "scalacheck" % "1.14.1"
+      "org.scalacheck" %% "scalacheck" % "1.14.1",
+      "org.typelevel" %% "cats-effect" % "2.1.4"
     )
   ).dependsOn(shared)
 
