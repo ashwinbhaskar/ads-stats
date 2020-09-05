@@ -9,14 +9,54 @@ import org.scalacheck.rng.Seed
 import ads.delivery.model.Click
 import scala.util.chaining._
 import ads.delivery.model.Install
+import cats.effect.IO
 
 object TimeTravel {
-  def apply(preRequisite: PreRequisite): Unit = {
-    val deliveryIdGen: Gen[ju.UUID] = Gen.uuid
-    val deliveryGen: Gen[Delivery] = Generator.delivery
+
+  private def jsonize(delivery: Delivery): ujson.Obj =
+    ujson.Obj(
+      "advertisementId" -> delivery.advertisementId,
+      "deliveryId" -> delivery.deliveryId.toString,
+      "time" -> delivery.time.toString,
+      "browser" -> delivery.browser.stringRep,
+      "os" -> delivery.os.stringRep,
+      "site" -> delivery.site.toExternalForm
+    )
+
+  private def jsonize(click: Click): ujson.Obj =
+    ujson.Obj(
+      "deliveryId" -> click.deliveryId.toString,
+      "clickId" -> click.clickId.toString,
+      "time" -> click.time.toString
+    )
+
+  private def jsonize(install: Install): ujson.Obj =
+    ujson.Obj(
+      "installId" -> install.installId.toString,
+      "clickId" -> install.clickId.toString,
+      "time" -> install.time.toString
+    )
+
+  private def timeTravel(
+      deliveries: List[Delivery],
+      clicks: List[Click],
+      installs: List[Install]
+  ): IO[Unit] = {
     val host = "http://127.0.0.1:8000"
     val recordDeliveryUrl = s"$host/ads/delivery"
+    val recordClickUrl = s"$host/ads/click"
+    val recordInstallUrl = s"$host/ads/install"
 
+    IO.apply {
+      deliveries.foreach(d =>
+        requests.post(recordDeliveryUrl, data = jsonize(d))
+      )
+      clicks.foreach(c => requests.post(recordClickUrl, data = jsonize(c)))
+      installs.foreach(i => requests.post(recordInstallUrl, data = jsonize(i)))
+    }
+  }
+
+  def apply(preRequisite: PreRequisite): IO[Unit] = {
     val noDeliveries = preRequisite.deliveries
     val deliveryParameters = Parameters.default.withSize(noDeliveries)
     val deliveries: List[Delivery] = Gen
@@ -48,5 +88,6 @@ object TimeTravel {
         )
         .flatten
 
+    timeTravel(deliveries, clicks, installs)
   }
 }
