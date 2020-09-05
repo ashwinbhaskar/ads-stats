@@ -6,12 +6,12 @@ import scala.util.Try
 import scala.util.chaining._
 
 case class OffsetDateTimeWithMillis(val z: OffsetDateTime) extends AnyVal {
-  override def toString: String = 
+  override def toString: String =
     OffsetDateTimeWithMillis.formatterWithMillis.format(z)
 }
 
 object OffsetDateTimeWithMillis {
- val formatterWithMillis = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+  val formatterWithMillis = DateTimeFormatter.ISO_OFFSET_DATE_TIME
   def fromString(s: String): Try[OffsetDateTimeWithMillis] =
     Try(OffsetDateTime.parse(s, formatterWithMillis))
       .map(o => OffsetDateTimeWithMillis(o))
