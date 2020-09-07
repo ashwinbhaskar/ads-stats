@@ -32,7 +32,11 @@ lazy val perfTest = (project in file("perf-test"))
 
 lazy val shared = (project in file("shared"))
   .settings(
-    name := "shared"
+    name := "shared",
+    libraryDependencies ++=Seq(
+      "ch.qos.logback" % "logback-classic" % "1.2.3",
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
+    )
   )
 
 lazy val root = (project in file("."))
@@ -65,7 +69,6 @@ lazy val root = (project in file("."))
       Seq(
         "com.typesafe" % "config" % "1.4.0",
         "org.flywaydb" % "flyway-core" % "6.2.1",
-        "ch.qos.logback" % "logback-classic" % "1.2.3",
         "io.jaegertracing" % "jaeger-client" % "1.3.2"
       )
   ).dependsOn(shared)
