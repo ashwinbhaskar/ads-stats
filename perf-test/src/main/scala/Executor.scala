@@ -1,4 +1,4 @@
-import model.PreRequisite
+import model.TimeTravelData
 import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
 import ads.delivery.model.Delivery
@@ -16,7 +16,7 @@ object Executor {
       timeToRunInSeconds: Int,
       badRequestPercentage: Float,
       fetchToInsertRatio: Float,
-      preRequisite: PreRequisite
+      preRequisite: TimeTravelData
   ): Unit = {
     val now = LocalTime.now
     val endTime = now.plusSeconds(timeToRunInSeconds)

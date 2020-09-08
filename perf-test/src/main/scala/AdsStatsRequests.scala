@@ -1,4 +1,4 @@
-import model.PreRequisite
+import model.TimeTravelData
 import org.scalacheck.Gen
 import org.scalacheck.Prop.forAll
 import ads.delivery.model.Delivery
@@ -10,8 +10,9 @@ import ads.delivery.model.Click
 import scala.util.chaining._
 import ads.delivery.model.Install
 import cats.effect.IO
+import config.AdsStatsService
 
-object TimeTravel {
+object AdsStatsRequests {
 
   private def jsonize(delivery: Delivery): ujson.Obj =
     ujson.Obj(
@@ -37,12 +38,13 @@ object TimeTravel {
       "time" -> install.time.toString
     )
 
-  private def timeTravel(
+  private def prepareRequests(
+      config: AdsStatsService,
       deliveries: List[Delivery],
       clicks: List[Click],
       installs: List[Install]
   ): IO[Unit] = {
-    val host = "http://127.0.0.1:8000"
+    val host = s"http://${config.host}:${config.port}"
     val recordDeliveryUrl = s"$host/ads/delivery"
     val recordClickUrl = s"$host/ads/click"
     val recordInstallUrl = s"$host/ads/install"
@@ -56,14 +58,14 @@ object TimeTravel {
     }
   }
 
-  def apply(preRequisite: PreRequisite): IO[Unit] = {
-    val noDeliveries = preRequisite.deliveries
+  def timeTravel(config: AdsStatsService, ttd: TimeTravelData): IO[Unit] = {
+    val noDeliveries = ttd.deliveries
     val deliveryParameters = Parameters.default.withSize(noDeliveries)
     val deliveries: List[Delivery] = Gen
       .listOf[Delivery](Generator.delivery)
       .pureApply(deliveryParameters, Seed.random)
 
-    val c = (1 / preRequisite.deliveriesToClicksRatio)
+    val c = (1 / ttd.deliveriesToClicksRatio)
       .pipe(Math.ceil(_))
       .pipe(_.toInt)
     val clickParameters = Parameters.default.withSize(c)
@@ -75,7 +77,7 @@ object TimeTravel {
       )
       .flatten
 
-    val i = (1 / preRequisite.clicksToInstallsRatio)
+    val i = (1 / ttd.clicksToInstallsRatio)
       .pipe(Math.ceil(_))
       .pipe(_.toInt)
     val installParameters = Parameters.default.withSize(i)
@@ -88,6 +90,6 @@ object TimeTravel {
         )
         .flatten
 
-    timeTravel(deliveries, clicks, installs)
+    prepareRequests(config, deliveries, clicks, installs)
   }
 }

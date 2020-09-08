@@ -1,6 +1,6 @@
 package model
 
-case class PreRequisite(
+case class TimeTravelData(
     deliveries: Int,
     deliveriesToClicksRatio: Float,
     clicksToInstallsRatio: Float

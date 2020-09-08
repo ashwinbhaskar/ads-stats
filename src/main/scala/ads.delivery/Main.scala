@@ -24,16 +24,17 @@ object Main extends IOApp {
     val configs = new AllConfigsImpl(tsc)
     Migration.migrate(configs)
     
-    val shouldUseNoOpTracer = System.getenv("use_no_op_tracer") == "true"
+    val shouldUseNoOpTracer = System.getProperty("use_no_op_tracer") == "true"
+    logger.debug(s"use_no_op_tracer property value is ${System.getProperty("use_no_op_tracer")}")
     logger.debug(s"is no op tracer being used? = $shouldUseNoOpTracer")
     implicit val tracingContext: TracingContextBuilder[IO] =
       if(shouldUseNoOpTracer)
         Tracing.noOpTracingContext[IO].unsafeRunSync
       else
         Tracing.jaegarTracingContext[IO](configs).unsafeRunSync
+
     implicit val ec = ExecutionContext.global
     val database = new Database(configs)
-
     database.getTransactor.use { t: HikariTransactor[IO] =>
       val statsRepository = new StatsRepositoryImpl(t)
       val routes = new Router(statsRepository).routes
