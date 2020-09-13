@@ -92,6 +92,7 @@ class Router(repository: StatsRepository)(implicit
     }
 
   val routes = TracedHttpRoutes[IO] {
+    case (GET -> Root / "ping") using tracingContext => Ok("pong")
     case (req @ POST -> Root / "ads" / "delivery") using tracingContext =>
       tracingContext.span("Record delivery").use { tcx =>
         val result = for {
