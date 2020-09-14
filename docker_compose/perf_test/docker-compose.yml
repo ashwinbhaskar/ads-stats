@@ -67,7 +67,7 @@ services:
     container_name: perf-test
     depends_on: 
       - ads-stats-app
-    command: ["./wait-for-server.sh", "ads-stats-app", "8000"]
+    command: ["./wait-for-server.sh", "ads-stats-app", "8000", "java", "-Dis_time_travel_mode=false", "-Ddelivery_to_query_ratio=${delivery_to_query_ratio}", "-Ddelivery_to_click_ratio=${delivery_to_click_ratio}", "-Dclick_to_install_ratio=${click_to_install_ratio}", "-Drunning_time_in_seconds=${running_time_in_seconds}", "-jar", "app.jar"]
     links:
       - ads-stats-app
 volumes:

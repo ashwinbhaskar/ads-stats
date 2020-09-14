@@ -24,7 +24,9 @@ class AllConfigsImpl(config: Config) extends AllConfigs {
 
   override def getAgentPort: Int = config.getInt("tracer.agent.port")
 
-  override def getSamplingManagerHost: String = config.getString("tracer.agent.sampling_manager_host")
+  override def getSamplingManagerHost: String =
+    config.getString("tracer.agent.sampling_manager_host")
 
-  override def getSamplingManagerPort: Int = config.getInt("tracer.agent.sampling_manager_port")
+  override def getSamplingManagerPort: Int =
+    config.getInt("tracer.agent.sampling_manager_port")
 }

@@ -34,7 +34,10 @@ object Tracing {
     System.setProperty("JAEGER_AGENT_HOST", host)
     System.setProperty("JAEGER_AGENT_PORT", port.toString)
     System.setProperty("JAEGER_SERVICE_NAME", serviceName)
-    System.setProperty("JAEGER_SAMPLER_MANAGER_HOST_PORT", s"$samplingManagerHost:$samplingManagerPort")
+    System.setProperty(
+      "JAEGER_SAMPLER_MANAGER_HOST_PORT",
+      s"$samplingManagerHost:$samplingManagerPort"
+    )
     val configuration = Configuration.fromEnv
     val tracer: Tracer = configuration.getTracer
     OpenTracingContext.builder[F, Tracer, Span](tracer)

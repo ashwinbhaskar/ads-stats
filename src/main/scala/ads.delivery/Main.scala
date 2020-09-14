@@ -23,12 +23,14 @@ object Main extends IOApp {
     val tsc = ConfigFactory.load
     val configs = new AllConfigsImpl(tsc)
     Migration.migrate(configs)
-    
+
     val shouldUseNoOpTracer = System.getProperty("use_no_op_tracer") == "true"
-    logger.debug(s"use_no_op_tracer property value is ${System.getProperty("use_no_op_tracer")}")
+    logger.debug(
+      s"use_no_op_tracer property value is ${System.getProperty("use_no_op_tracer")}"
+    )
     logger.debug(s"is no op tracer being used? = $shouldUseNoOpTracer")
     implicit val tracingContext: TracingContextBuilder[IO] =
-      if(shouldUseNoOpTracer)
+      if (shouldUseNoOpTracer)
         Tracing.noOpTracingContext[IO].unsafeRunSync
       else
         Tracing.jaegarTracingContext[IO](configs).unsafeRunSync
