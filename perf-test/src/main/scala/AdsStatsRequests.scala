@@ -10,7 +10,10 @@ import ads.delivery.model.Click
 import scala.util.chaining._
 import ads.delivery.model.Install
 import cats.effect.IO
+import cats.implicits._
 import config.AdsStatsService
+import cats.effect.IOApp
+import cats.effect.IO
 
 object AdsStatsRequests {
 
@@ -43,50 +46,64 @@ object AdsStatsRequests {
       deliveries: List[Delivery],
       clicks: List[Click],
       installs: List[Install]
-  ): IO[Unit] = {
+  ): List[IO[_]] = {
+    println(s"size of deliveries = ${deliveries.size}")
+    println(s"size of clicks = ${clicks.size}")
+    println(s"size of installs = ${installs.size}")
+    
     val host = s"http://${config.host}:${config.port}"
     val recordDeliveryUrl = s"$host/ads/delivery"
     val recordClickUrl = s"$host/ads/click"
     val recordInstallUrl = s"$host/ads/install"
 
-    IO.apply {
-      deliveries.foreach(d =>
-        requests.post(recordDeliveryUrl, data = jsonize(d))
-      )
-      clicks.foreach(c => requests.post(recordClickUrl, data = jsonize(c)))
-      installs.foreach(i => requests.post(recordInstallUrl, data = jsonize(i)))
-    }
+    println(s"recordDeliveryURL = $recordDeliveryUrl")
+    println(s"recordClickURL = $recordClickUrl")
+    println(s"recordInstallURL = $recordInstallUrl")      
+    val d: List[IO[_]] = deliveries.map(d =>
+      IO.apply(
+        requests.post(recordDeliveryUrl, data = jsonize(d)
+      ))
+    )
+    val c: List[IO[_]] = 
+      clicks.map(c => IO.apply(
+        requests.post(recordClickUrl, data = jsonize(c))))
+
+    val i: List[IO[_]] = 
+      installs.map(i => IO.apply(
+        requests.post(recordInstallUrl, data = jsonize(i))))
+    
+    d ++ c ++ i
   }
 
-  def timeTravel(config: AdsStatsService, ttd: TimeTravelData): IO[Unit] = {
+  def timeTravel(config: AdsStatsService, ttd: TimeTravelData): List[IO[_]] = {
     val noDeliveries = ttd.deliveries
-    val deliveryParameters = Parameters.default.withSize(noDeliveries)
-    val deliveries: List[Delivery] = Gen
-      .listOf[Delivery](Generator.delivery)
-      .pureApply(deliveryParameters, Seed.random)
+    val deliveries: List[Delivery] = Generator
+        .deliveries
+        .take(noDeliveries)
+        .toList
 
-    val c = (1 / ttd.deliveriesToClicksRatio)
+    val noOfClicksPerDelivery = (1 / ttd.deliveriesToClicksRatio)
       .pipe(Math.ceil(_))
       .pipe(_.toInt)
-    val clickParameters = Parameters.default.withSize(c)
     val clicks: List[Click] = deliveries
       .map(d =>
-        Gen
-          .listOf[Click](Generator.click(d.deliveryId))
-          .pureApply(clickParameters, Seed.random)
+        Generator
+          .clicks(d.deliveryId)
+          .take(noOfClicksPerDelivery)
+          .toList
       )
       .flatten
 
-    val i = (1 / ttd.clicksToInstallsRatio)
+    val noOfInstallsPerClick = (1 / ttd.clicksToInstallsRatio)
       .pipe(Math.ceil(_))
       .pipe(_.toInt)
-    val installParameters = Parameters.default.withSize(i)
     val installs: List[Install] =
       clicks
         .map(c =>
-          Gen
-            .listOf[Install](Generator.install(c.clickId))
-            .pureApply(installParameters, Seed.random)
+          Generator
+            .installs(c.clickId)
+            .take(noOfInstallsPerClick)
+            .toList
         )
         .flatten
 
