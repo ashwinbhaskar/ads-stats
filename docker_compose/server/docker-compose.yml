@@ -40,7 +40,7 @@ services:
       - 14250:14250
       - 9411:9411
 
-  scala-app:
+  ads-stats-app:
     image: ads-stats-app:latest
     network_mode: bridge
     container_name: ads-stats-app
