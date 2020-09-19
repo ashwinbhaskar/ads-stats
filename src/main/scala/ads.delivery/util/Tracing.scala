@@ -10,10 +10,12 @@ import com.colisweb.tracing.context._
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.colisweb.tracing.context.OpenTracingContext
 import com.colisweb.tracing.context.LoggingTracingContext
+import com.colisweb.tracing.context.NoOpTracingContext
 import ads.delivery.config.TracingConfig
 import io.jaegertracing.Configuration.ReporterConfiguration
 import io.jaegertracing.spi.Reporter
 import io.jaegertracing.Configuration.SenderConfiguration
+import io.jaegertracing.internal.samplers.HttpSamplingManager
 
 object Tracing {
 
@@ -24,14 +26,23 @@ object Tracing {
   def jaegarTracingContext[F[_]: Timer: Sync](
       tracerConfig: TracingConfig
   ): F[TracingContextBuilder[F]] = {
-    val senderConfiguration = (new SenderConfiguration)
-      .withAgentHost(tracerConfig.getAgentHost)
-      .withAgentPort(tracerConfig.getAgentPort)
-    val reporterConfiguration =
-      (new ReporterConfiguration).withSender(senderConfiguration)
-    val configuration = new Configuration(tracerConfig.getServiceName)
-      .withReporter(reporterConfiguration)
+    val serviceName = tracerConfig.getServiceName
+    val host = tracerConfig.getAgentHost
+    val port = tracerConfig.getAgentPort
+    val samplingManagerHost = tracerConfig.getSamplingManagerHost
+    val samplingManagerPort = tracerConfig.getSamplingManagerPort
+    System.setProperty("JAEGER_AGENT_HOST", host)
+    System.setProperty("JAEGER_AGENT_PORT", port.toString)
+    System.setProperty("JAEGER_SERVICE_NAME", serviceName)
+    System.setProperty(
+      "JAEGER_SAMPLER_MANAGER_HOST_PORT",
+      s"$samplingManagerHost:$samplingManagerPort"
+    )
+    val configuration = Configuration.fromEnv
     val tracer: Tracer = configuration.getTracer
     OpenTracingContext.builder[F, Tracer, Span](tracer)
   }
+
+  def noOpTracingContext[F[_]: Timer: Sync]: F[TracingContextBuilder[F]] =
+    NoOpTracingContext.builder[F]
 }

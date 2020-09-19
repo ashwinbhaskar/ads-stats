@@ -15,6 +15,9 @@ object Browser {
     }
   def fromStringUnsafe(str: String): Browser =
     fromString(str).get
+
+  def all: Set[Browser] =
+    Set(Chrome, FireFox, Edge, Safari)
 }
 
 object Chrome extends Browser {

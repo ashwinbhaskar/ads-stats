@@ -15,6 +15,9 @@ object OS {
 
   def fromStringUnsafe(s: String): OS =
     fromString(s).get
+
+  def all: Set[OS] =
+    Set(IOS, Android, Windows)
 }
 
 object IOS extends OS {

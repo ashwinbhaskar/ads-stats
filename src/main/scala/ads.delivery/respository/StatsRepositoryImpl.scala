@@ -31,7 +31,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
   override def recordDelivery(
       d: Delivery
   )(implicit tracingContext: TracingContext[IO]): IOResult[Unit] =
-    tracingContext.span("Insert Delivery") use { _ =>
+    tracingContext.span("Record delivery repository") use { _ =>
       sql"INSERT INTO delivery(delivery_id, advertisement_id, t, browser, os, site) VALUES (${d.deliveryId}, ${d.advertisementId},${d.time},${d.browser},${d.os},${d.site})".update.run
         .transact(transactor)
         .redeem(ifException, ifInsertSuccess)
@@ -40,7 +40,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
   override def recordInstall(i: Install)(implicit
       tracingContext: TracingContext[IO]
   ): IOResult[Unit] =
-    tracingContext.span("Insert Install") use { _ =>
+    tracingContext.span("Record install repository") use { _ =>
       sql"INSERT INTO install(install_id, click_id, t) VALUES(${i.installId}, ${i.clickId}, ${i.time})".update.run
         .transact(transactor)
         .redeem(ifException, ifInsertSuccess)
@@ -49,7 +49,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
   override def recordClick(c: Click)(implicit
       tracingContext: TracingContext[IO]
   ): IOResult[Unit] =
-    tracingContext.span("Insert Click") use { _ =>
+    tracingContext.span("Record click repository") use { _ =>
       sql"INSERT INTO click(delivery_id, click_id, t) VALUES(${c.deliveryId}, ${c.clickId}, ${c.time})".update.run
         .transact(transactor)
         .redeem(ifException, ifInsertSuccess)
@@ -61,7 +61,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
   )(implicit
       tracingContext: TracingContext[IO]
   ): IOResult[Stats] =
-    tracingContext.span("Get Stats") use { _ =>
+    tracingContext.span("Get stats repository") use { _ =>
       val result: IO[Stats] =
         for {
           deliveries <-
@@ -93,7 +93,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
   )(implicit
       tracingContext: TracingContext[IO]
   ): IOResult[List[CategorizedStats]] =
-    tracingContext.span("Get Categorized Stats") use { _ =>
+    tracingContext.span("Get categorized stats repository") use { _ =>
       val result: IO[List[CategorizedStats]] =
         for {
           deliveries <-

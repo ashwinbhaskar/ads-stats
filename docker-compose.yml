@@ -15,7 +15,32 @@ services:
     ports:
       - 5431:5432
 
-  scala-app:
+  jaegar:
+    image: jaegertracing/all-in-one:latest
+    network_mode: bridge
+    container_name: jaegar
+    environment: 
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+    expose:
+      - 5775
+      - 6831
+      - 6832
+      - 5778
+      - 16686
+      - 14268
+      - 14250
+      - 9411
+    ports:
+      - 5775:5775
+      - 6831:6831
+      - 6832:6832
+      - 5778:5778
+      - 16686:16686
+      - 14268:14268
+      - 14250:14250
+      - 9411:9411
+
+  ads-stats-app:
     image: ads-stats-app:latest
     network_mode: bridge
     container_name: ads-stats-app
@@ -26,9 +51,25 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
-    command: ["./wait-for-it.sh", "postgres:5432"]
+      - jaegar
+    command: ["./wait-for-it.sh", "postgres:5432", "jaegar:5775", "jaegar:16686"]
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:8000/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     links:
       - postgres
-
+      - jaegar
+      
+  perf-test:
+    image: perf-test-app:latest
+    network_mode: bridge
+    container_name: perf-test
+    depends_on: 
+      - ads-stats-app
+    command: ["./wait-for-server.sh", "ads-stats-app", "8000", "java", "-Dis_perf_test_mode=${is_perf_test_mode}","-Dis_time_travel_mode=${is_time_travel_mode}", "-Ddelivery_to_query_ratio=${delivery_to_query_ratio}", "-Ddelivery_to_click_ratio=${delivery_to_click_ratio}", "-Dclick_to_install_ratio=${click_to_install_ratio}", "-Drunning_time_in_seconds=${running_time_in_seconds}", "-jar", "app.jar"]
+    links:
+      - ads-stats-app
 volumes:
     postgres-data:
