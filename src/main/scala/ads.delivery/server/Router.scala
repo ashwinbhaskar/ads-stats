@@ -94,7 +94,7 @@ class Router(repository: StatsRepository)(implicit
   val routes = TracedHttpRoutes[IO] {
     case (GET -> Root / "ping") using tracingContext => Ok("pong")
     case (req @ POST -> Root / "ads" / "delivery") using tracingContext =>
-      tracingContext.span("Record delivery").use { tcx =>
+      tracingContext.span("Record delivery router").use { tcx =>
         val result = for {
           delivery <- EitherT(decodeBody[Delivery](req))
           r <- EitherT(repository.recordDelivery(delivery)(tcx))
@@ -104,7 +104,7 @@ class Router(repository: StatsRepository)(implicit
       }
 
     case (req @ POST -> Root / "ads" / "install") using tracingContext =>
-      tracingContext.span("Record Install").use { trx =>
+      tracingContext.span("Record install router").use { trx =>
         val result = for {
           install <- EitherT(decodeBody[Install](req))
           r <- EitherT(repository.recordInstall(install)(trx))
@@ -114,7 +114,7 @@ class Router(repository: StatsRepository)(implicit
       }
 
     case (req @ POST -> Root / "ads" / "click") using tracingContext =>
-      tracingContext.span("Record Click").use { tcx =>
+      tracingContext.span("Record click router").use { tcx =>
         val result = for {
           click <- EitherT(decodeBody[Click](req))
           r <- EitherT(repository.recordClick(click)(tcx))
@@ -124,7 +124,7 @@ class Router(repository: StatsRepository)(implicit
       }
 
     case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext =>
-      tracingContext.span("Stats").use { tcx =>
+      tracingContext.span("Get stats router").use { tcx =>
         val result = for {
           startTime <- decodeTime(start)
           endTime <- decodeTime(end)
@@ -134,7 +134,7 @@ class Router(repository: StatsRepository)(implicit
         result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
       }
     case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories using tracingContext =>
-      tracingContext.span("Categorized Stats").use { tcx =>
+      tracingContext.span("Get categorized stats router").use { tcx =>
         val result = for {
           categ <- EitherT(IO(collectCategories(categories)))
           startTime <- decodeTime(start)
