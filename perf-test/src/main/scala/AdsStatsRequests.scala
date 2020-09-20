@@ -42,7 +42,9 @@ object AdsStatsRequests {
       "time" -> install.time.toString
     )
 
-  private def getRecordingUrls(config: AdsStatsService): (String, String, String) = {
+  private def getRecordingUrls(
+      config: AdsStatsService
+  ): (String, String, String) = {
     val host = s"http://${config.host}:${config.port}"
     val recordDeliveryUrl = s"$host/ads/delivery"
     val recordClickUrl = s"$host/ads/click"
@@ -56,7 +58,8 @@ object AdsStatsRequests {
       clicks: List[Click],
       installs: List[Install]
   ): List[IO[_]] = {
-    val (recordDeliveryUrl, recordClickUrl, recordInstallUrl) = getRecordingUrls(config)
+    val (recordDeliveryUrl, recordClickUrl, recordInstallUrl) =
+      getRecordingUrls(config)
     println(s"recordDeliveryURL = $recordDeliveryUrl")
     println(s"recordClickURL = $recordClickUrl")
     println(s"recordInstallURL = $recordInstallUrl")
@@ -76,8 +79,12 @@ object AdsStatsRequests {
     d ++ c ++ i
   }
 
-  private def prepareRequests(config: AdsStatsService, deliveriesClicksInstalls:  LazyList[(Delivery, List[Click], List[Install])]): LazyList[IO[_]] = {
-    val (recordDeliveryUrl, recordClickUrl, recordInstallUrl) = getRecordingUrls(config)
+  private def prepareRequests(
+      config: AdsStatsService,
+      deliveriesClicksInstalls: LazyList[(Delivery, List[Click], List[Install])]
+  ): LazyList[IO[_]] = {
+    val (recordDeliveryUrl, recordClickUrl, recordInstallUrl) =
+      getRecordingUrls(config)
 
     println(s"recordDeliveryURL = $recordDeliveryUrl")
     println(s"recordClickURL = $recordClickUrl")
@@ -85,13 +92,15 @@ object AdsStatsRequests {
 
     val f: ((Delivery, List[Click], List[Install])) => IO[_] = {
       case (delivery, clicks, installs) =>
-        IO.apply{
+        IO.apply {
           requests.post(recordDeliveryUrl, data = jsonize(delivery))
           clicks.foreach(c => requests.post(recordClickUrl, data = jsonize(c)))
-          installs.foreach(i => requests.post(recordInstallUrl, data = jsonize(i)))
+          installs.foreach(i =>
+            requests.post(recordInstallUrl, data = jsonize(i))
+          )
         }
     }
-    
+
     deliveriesClicksInstalls.map(f)
   }
 
@@ -129,7 +138,10 @@ object AdsStatsRequests {
     prepareRequests(config, deliveries, clicks, installs)
   }
 
-  def perfTest(config: AdsStatsService, perfTestData: PerfTestData): LazyList[IO[_]] = {
+  def perfTest(
+      config: AdsStatsService,
+      perfTestData: PerfTestData
+  ): LazyList[IO[_]] = {
     val noOfClicksPerDelivery = (1 / perfTestData.deliveriesToClicksRatio)
       .pipe(Math.ceil(_))
       .pipe(_.toInt)
@@ -137,13 +149,22 @@ object AdsStatsRequests {
       .pipe(Math.ceil(_))
       .pipe(_.toInt)
 
-    val deliveriesClicksInstalls: LazyList[(Delivery, List[Click], List[Install])] = 
+    val deliveriesClicksInstalls
+        : LazyList[(Delivery, List[Click], List[Install])] =
       Generator.deliveries.map { delivery =>
-        val clicks: List[Click] = Generator.clicks(delivery.deliveryId).take(noOfClicksPerDelivery).toList
-        val installs: List[Install] = clicks.map(click => Generator.installs(click.clickId).take(noOfInstallsPerClick)).flatten.toList
+        val clicks: List[Click] = Generator
+          .clicks(delivery.deliveryId)
+          .take(noOfClicksPerDelivery)
+          .toList
+        val installs: List[Install] = clicks
+          .map(click =>
+            Generator.installs(click.clickId).take(noOfInstallsPerClick)
+          )
+          .flatten
+          .toList
         (delivery, clicks, installs)
       }
-  
+
     prepareRequests(config, deliveriesClicksInstalls)
   }
 }
