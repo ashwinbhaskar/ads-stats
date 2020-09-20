@@ -23,12 +23,9 @@ object Main extends IOApp {
       .as(ExitCode.Success)
   }
 
-  def execute(tasks: LazyList[IO[_]], semaphore: Semaphore[IO]): IO[Unit] = {
-    for {
-      _ <- semaphore.acquire
-      _ <- IO.apply{println("aquired semaphore")}
-      _ <- tasks.parSequence
-    } yield () 
+  def execute(tasks: LazyList[IO[_]]): IO[Unit] = {
+    tasks.parSequence.unsafeRunSync
+    IO.unit
   }
 
   def perfTest(config: AdsStatsService): IO[ExitCode] = {
@@ -46,20 +43,14 @@ object Main extends IOApp {
 
     val deadLine = timeToRunInSeconds.seconds.fromNow
     
-    val m = 
-      for {
-        s <- Semaphore[IO](3)
-        _ <- AdsStatsRequests
-              .perfTest(config, perfTestData)
-              .grouped(50)
-              .map(l => execute(l, s))
-              .takeWhile(_ => deadLine.hasTimeLeft)
-              .toList
-              .parSequence
-              .void
-      } yield ()
-
-    m.as(ExitCode.Success)
+    AdsStatsRequests
+      .perfTest(config, perfTestData)
+      .grouped(100) //execute in chunks of 100
+      .map(execute)
+      .takeWhile(_ => deadLine.hasTimeLeft)
+      .toList
+      .parSequence
+      .as(ExitCode.Success)
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
