@@ -6,6 +6,7 @@ import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
 import scala.concurrent.duration._
 import cats.effect.concurrent.Semaphore
+import scala.annotation.tailrec
 
 object Main extends IOApp {
 
@@ -23,11 +24,15 @@ object Main extends IOApp {
       .as(ExitCode.Success)
   }
 
-  def execute(tasks: LazyList[IO[_]]): IO[Unit] = {
-    tasks.parSequence.unsafeRunSync
-    IO.unit
-  }
-
+  @tailrec
+  def execute(tasks: LazyList[IO[_]])(implicit deadLine: Deadline, concurrency: Int): Unit =
+    if(deadLine.hasTimeLeft) {
+      val toExecute = tasks.take(concurrency)
+      val rest = tasks.drop(concurrency)
+      toExecute.parSequence.unsafeRunSync
+      execute(rest)
+    }
+  
   def perfTest(config: AdsStatsService): IO[ExitCode] = {
     val deliveryToClickRatio =
       System.getProperty("delivery_to_click_ratio").toFloat
@@ -47,14 +52,10 @@ object Main extends IOApp {
 
     val deadLine = timeToRunInSeconds.seconds.fromNow
 
-    AdsStatsRequests
-      .perfTest(config, perfTestData)
-      .grouped(100) //execute in chunks of 100
-      .map(execute)
-      .takeWhile(_ => deadLine.hasTimeLeft)
-      .toList
-      .parSequence
-      .as(ExitCode.Success)
+    val operations: LazyList[IO[_]] = AdsStatsRequests.perfTest(config, perfTestData)
+    execute(operations)(deadLine, concurrency = 100)
+
+    IO.unit.as(ExitCode.Success)
   }
 
   override def run(args: List[String]): IO[ExitCode] = {
