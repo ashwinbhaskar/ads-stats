@@ -26,7 +26,8 @@ lazy val perfTest = (project in file("perf-test"))
       "com.lihaoyi" %% "upickle" % "0.9.5",
       "com.github.pureconfig" %% "pureconfig" % "0.13.0",
       "org.scalacheck" %% "scalacheck" % "1.14.1",
-      "org.typelevel" %% "cats-effect" % "2.1.4"
+      "org.typelevel" %% "cats-effect" % "2.1.4",
+      "co.fs2" %% "fs2-core" % "2.4.0"
     )
   ).dependsOn(shared)
 
