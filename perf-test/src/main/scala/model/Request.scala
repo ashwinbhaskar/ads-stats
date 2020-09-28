@@ -1,5 +1,5 @@
 package model
 
 trait Request[T] {
-    def execute: T
+  def execute: T
 }

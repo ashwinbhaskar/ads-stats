@@ -13,7 +13,8 @@ object Server {
       routes: HttpRoutes[F],
       config: ServerConfig
   ): F[ExitCode] =
-    BlazeServerBuilder.apply[F](global)
+    BlazeServerBuilder
+      .apply[F](global)
       .withHttpApp(routes.orNotFound)
       .bindHttp(port = config.getPort, host = config.getHost)
       .serve

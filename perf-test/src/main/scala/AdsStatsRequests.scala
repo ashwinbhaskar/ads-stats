@@ -82,9 +82,17 @@ object AdsStatsRequests {
 
     val rs: LazyList[Request[Unit]] = deliveriesClicksInstalls.map {
       case (delivery, clicks, installs) =>
-        val clicksRequests = clicks.map(c => new PostRequest(requests.post(recordClickUrl, data = jsonize(c))))
-        val installsRequests = installs.map(i => new PostRequest(requests.post(recordInstallUrl, data = jsonize(i))))
-        val deliveryRequests = List(new PostRequest(requests.post(recordDeliveryUrl, data = jsonize(delivery))))
+        val clicksRequests = clicks.map(c =>
+          new PostRequest(requests.post(recordClickUrl, data = jsonize(c)))
+        )
+        val installsRequests = installs.map(i =>
+          new PostRequest(requests.post(recordInstallUrl, data = jsonize(i)))
+        )
+        val deliveryRequests = List(
+          new PostRequest(
+            requests.post(recordDeliveryUrl, data = jsonize(delivery))
+          )
+        )
         deliveryRequests ++ clicksRequests ++ installsRequests
     }.flatten
 

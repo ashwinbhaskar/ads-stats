@@ -21,7 +21,7 @@ object Main extends IOApp {
       .parSequence
       .as(ExitCode.Success)
   }
-  
+
   def perfTest(config: AdsStatsService): IO[ExitCode] = {
     val deliveryToClickRatio =
       System.getProperty("delivery_to_click_ratio").toFloat

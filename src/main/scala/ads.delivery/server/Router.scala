@@ -74,7 +74,7 @@ class Router(repository: StatsRepository)(implicit
     r match {
       case Left(error) if error == UnhandledError =>
         InternalServerError(r.asJson)
-      case Left(_) => BadRequest(r.asJson)
+      case Left(_)  => BadRequest(r.asJson)
       case Right(_) => successResponse
     }
 
