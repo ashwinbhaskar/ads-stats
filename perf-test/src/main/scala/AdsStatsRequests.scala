@@ -1,20 +1,12 @@
 import model.TimeTravelData
-import org.scalacheck.Gen
-import org.scalacheck.Prop.forAll
 import ads.delivery.model.Delivery
-import java.{util => ju}
-import java.time.LocalTime
-import org.scalacheck.Gen.Parameters
-import org.scalacheck.rng.Seed
 import ads.delivery.model.Click
 import scala.util.chaining._
 import ads.delivery.model.Install
-import cats.effect.IO
-import cats.implicits._
 import config.AdsStatsService
-import cats.effect.IOApp
 import cats.effect.IO
-import model.PerfTestData
+import model.{PerfTestData, PostRequest, Request}
+import fs2.Stream
 
 object AdsStatsRequests {
 
@@ -60,9 +52,7 @@ object AdsStatsRequests {
   ): List[IO[_]] = {
     val (recordDeliveryUrl, recordClickUrl, recordInstallUrl) =
       getRecordingUrls(config)
-    println(s"recordDeliveryURL = $recordDeliveryUrl")
-    println(s"recordClickURL = $recordClickUrl")
-    println(s"recordInstallURL = $recordInstallUrl")
+
     val d: List[IO[_]] = deliveries.map(d =>
       IO.apply(requests.post(recordDeliveryUrl, data = jsonize(d)))
     )
@@ -82,7 +72,7 @@ object AdsStatsRequests {
   private def prepareRequests(
       config: AdsStatsService,
       deliveriesClicksInstalls: LazyList[(Delivery, List[Click], List[Install])]
-  ): LazyList[IO[_]] = {
+  ): Stream[IO, Request[Unit]] = {
     val (recordDeliveryUrl, recordClickUrl, recordInstallUrl) =
       getRecordingUrls(config)
 
@@ -90,18 +80,23 @@ object AdsStatsRequests {
     println(s"recordClickURL = $recordClickUrl")
     println(s"recordInstallURL = $recordInstallUrl")
 
-    val f: ((Delivery, List[Click], List[Install])) => IO[_] = {
+    val rs: LazyList[Request[Unit]] = deliveriesClicksInstalls.map {
       case (delivery, clicks, installs) =>
-        IO.apply {
-          requests.post(recordDeliveryUrl, data = jsonize(delivery))
-          clicks.foreach(c => requests.post(recordClickUrl, data = jsonize(c)))
-          installs.foreach(i =>
-            requests.post(recordInstallUrl, data = jsonize(i))
+        val clicksRequests = clicks.map(c =>
+          new PostRequest(requests.post(recordClickUrl, data = jsonize(c)))
+        )
+        val installsRequests = installs.map(i =>
+          new PostRequest(requests.post(recordInstallUrl, data = jsonize(i)))
+        )
+        val deliveryRequests = List(
+          new PostRequest(
+            requests.post(recordDeliveryUrl, data = jsonize(delivery))
           )
-        }
-    }
+        )
+        deliveryRequests ++ clicksRequests ++ installsRequests
+    }.flatten
 
-    deliveriesClicksInstalls.map(f)
+    Stream.fromIterator[IO](rs.iterator)
   }
 
   def timeTravel(config: AdsStatsService, ttd: TimeTravelData): List[IO[_]] = {
@@ -141,7 +136,7 @@ object AdsStatsRequests {
   def perfTest(
       config: AdsStatsService,
       perfTestData: PerfTestData
-  ): LazyList[IO[_]] = {
+  ): Stream[IO, Request[Unit]] = {
     val noOfClicksPerDelivery = (1 / perfTestData.deliveriesToClicksRatio)
       .pipe(Math.ceil(_))
       .pipe(_.toInt)

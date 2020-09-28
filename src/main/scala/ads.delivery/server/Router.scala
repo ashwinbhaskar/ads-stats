@@ -1,7 +1,6 @@
 package ads.delivery.server
 
 import scala.util.chaining._
-import scala.util.Try
 import cats.effect.IO
 import cats.implicits._
 import cats.data._
@@ -9,11 +8,9 @@ import io.circe.generic.auto._
 import io.circe.Encoder
 import io.circe.Decoder
 import io.circe.syntax._
-import org.http4s.dsl.io._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.headers.{Location, `Content-Type`}
-import org.http4s.{HttpRoutes, MediaType, Uri, Response, Request}
+import org.http4s.{Response, Request}
 import ads.delivery.model.Delivery
 import ads.delivery.implicits.Decoders._
 import ads.delivery.implicits.Encoders._
@@ -29,8 +26,6 @@ import ads.delivery.adt.InvalidDateTimeWithoutMillisFormat
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.colisweb.tracing.http.server.TracedHttpRoutes
 import com.colisweb.tracing.http.server.TracedHttpRoutes._
-import com.colisweb.tracing.http.server.TracedRequest
-import com.colisweb.tracing.core.implicits._
 
 class Router(repository: StatsRepository)(implicit
     val tracingContext: TracingContextBuilder[IO]
@@ -72,14 +67,6 @@ class Router(repository: StatsRepository)(implicit
       )
       .pipe(EitherT.apply)
 
-  private def timeDecoder(t: IO[OffsetDateTimeWithMillis]): IO[
-    Either[InvalidDateTimeWithMillisFormat.type, OffsetDateTimeWithMillis]
-  ] =
-    t.redeem(
-      _ => InvalidDateTimeWithMillisFormat.asLeft[OffsetDateTimeWithMillis],
-      _.asRight[InvalidDateTimeWithMillisFormat.type]
-    )
-
   private def toHttpResponse[T: Encoder](
       r: Result[T],
       successResponse: => IO[Response[IO]]
@@ -87,12 +74,12 @@ class Router(repository: StatsRepository)(implicit
     r match {
       case Left(error) if error == UnhandledError =>
         InternalServerError(r.asJson)
-      case Left(error) => BadRequest(r.asJson)
-      case Right(data) => successResponse
+      case Left(_)  => BadRequest(r.asJson)
+      case Right(_) => successResponse
     }
 
   val routes = TracedHttpRoutes[IO] {
-    case (GET -> Root / "ping") using tracingContext => Ok("pong")
+    case (GET -> Root / "ping") using _ => Ok("pong")
     case (req @ POST -> Root / "ads" / "delivery") using tracingContext =>
       tracingContext.span("Record delivery router").use { tcx =>
         val result = for {
@@ -123,7 +110,7 @@ class Router(repository: StatsRepository)(implicit
         result.value.flatMap(toHttpResponse(_, Created()))
       }
 
-    case GET -> Root / "ads" / "statistics" / time / start / end / "overall" using tracingContext =>
+    case GET -> Root / "ads" / "statistics" / "time" / start / end / "overall" using tracingContext =>
       tracingContext.span("Get stats router").use { tcx =>
         val result = for {
           startTime <- decodeTime(start)

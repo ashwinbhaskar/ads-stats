@@ -6,7 +6,6 @@ import ads.delivery.adt.OffsetDateTimeWithoutMillis
 import doobie.util.meta.Meta
 import doobie.implicits.javatime._
 import java.net.URL
-import java.sql.PreparedStatement
 import java.time.OffsetDateTime
 
 object DbConverters {

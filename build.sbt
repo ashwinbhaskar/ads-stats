@@ -16,6 +16,15 @@ val circeVersion = "0.13.0"
 val doobieVersion = "0.8.8"
 val http4sVersion = "0.21.6"
 val scalaTracingVersion = "2.4.1"
+val compilerOptions = Seq(
+      "-Ywarn-dead-code",
+      "-Ywarn-unused:imports", 
+      "-Ywarn-unused:locals", 
+      "-Ywarn-unused:patvars",
+      "-Ywarn-unused:privates",
+      "-deprecation",
+      "-Xfatal-warnings"
+    )
 
 lazy val perfTest = (project in file("perf-test"))
   .settings(
@@ -26,8 +35,10 @@ lazy val perfTest = (project in file("perf-test"))
       "com.lihaoyi" %% "upickle" % "0.9.5",
       "com.github.pureconfig" %% "pureconfig" % "0.13.0",
       "org.scalacheck" %% "scalacheck" % "1.14.1",
-      "org.typelevel" %% "cats-effect" % "2.1.4"
-    )
+      "org.typelevel" %% "cats-effect" % "2.1.4",
+      "co.fs2" %% "fs2-core" % "2.4.0"
+    ),
+    scalacOptions ++= compilerOptions
   ).dependsOn(shared)
 
 lazy val shared = (project in file("shared"))
@@ -36,7 +47,8 @@ lazy val shared = (project in file("shared"))
     libraryDependencies ++=Seq(
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-    )
+    ),
+    scalacOptions ++= compilerOptions
   )
 
 lazy val root = (project in file("."))
@@ -44,7 +56,7 @@ lazy val root = (project in file("."))
     name := "ads-stats",
     fork := true,
     cancelable := true,
-
+    scalacOptions ++= compilerOptions,
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
