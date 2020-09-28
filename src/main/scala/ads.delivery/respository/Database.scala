@@ -2,7 +2,6 @@ package ads.delivery.respository
 
 import scala.concurrent.ExecutionContext
 import ads.delivery.config.DBConfig
-import cats.effect.ContextShift
 import cats.effect.{Blocker, ContextShift, IO, Resource}
 import doobie.hikari._
 import doobie.util.ExecutionContexts

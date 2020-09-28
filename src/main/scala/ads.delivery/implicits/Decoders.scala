@@ -2,16 +2,13 @@ package ads.delivery.implicits
 
 import scala.util.Try
 import scala.util.chaining._
-import io.circe.{Decoder, Json, HCursor, DecodingFailure}
-import java.time.format.DateTimeFormatter
+import io.circe.{Decoder, HCursor, DecodingFailure}
 import java.net.URL
 import java.util.UUID
-import ads.delivery.model.{Interval, Click}
 import ads.delivery.adt.Browser
 import ads.delivery.adt.OffsetDateTimeWithoutMillis
 import ads.delivery.adt.OffsetDateTimeWithMillis
 import ads.delivery.adt.OS
-import java.time.OffsetDateTime
 import ads.delivery.adt.Category
 
 object Decoders {

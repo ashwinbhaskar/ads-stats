@@ -1,7 +1,6 @@
 package ads.delivery.respository
 
 import ads.delivery.model._
-import ads.delivery.adt.Error
 import ads.delivery.Types._
 import ads.delivery.adt.OffsetDateTimeWithoutMillis
 import ads.delivery.adt.Category

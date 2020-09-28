@@ -1,9 +1,7 @@
 package ads.delivery.respository
 
 import doobie.util.transactor.Transactor
-import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import doobie.postgres.implicits._
 import cats.effect.IO
 import cats.implicits._
@@ -11,7 +9,6 @@ import ads.delivery.adt._
 import ads.delivery.Types._
 import ads.delivery.model.{Stats, Install, Delivery, Click, CategorizedStats}
 import ads.delivery.implicits.DbConverters._
-import java.time.OffsetDateTime
 import com.colisweb.tracing.core.TracingContext
 
 class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {

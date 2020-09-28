@@ -12,7 +12,6 @@ import ads.delivery.respository.Migration
 import ads.delivery.respository.Database
 import ads.delivery.util.Tracing
 import com.colisweb.tracing.core.TracingContextBuilder
-import cats.effect.Timer
 import com.typesafe.scalalogging.Logger
 
 object Main extends IOApp {

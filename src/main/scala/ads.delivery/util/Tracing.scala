@@ -2,20 +2,13 @@ package ads.delivery.util
 
 import io.opentracing.Tracer
 import io.opentracing.Span
-import io.opentracing._
 import io.jaegertracing.Configuration
-import com.colisweb.tracing.core.implicits._
-import cats.effect.{IO, Timer, Sync}
-import com.colisweb.tracing.context._
+import cats.effect.{Timer, Sync}
 import com.colisweb.tracing.core.TracingContextBuilder
 import com.colisweb.tracing.context.OpenTracingContext
 import com.colisweb.tracing.context.LoggingTracingContext
 import com.colisweb.tracing.context.NoOpTracingContext
 import ads.delivery.config.TracingConfig
-import io.jaegertracing.Configuration.ReporterConfiguration
-import io.jaegertracing.spi.Reporter
-import io.jaegertracing.Configuration.SenderConfiguration
-import io.jaegertracing.internal.samplers.HttpSamplingManager
 
 object Tracing {
 
