@@ -4,7 +4,6 @@ ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ashwinbhaskar"
 ThisBuild / organizationName := "example"
-ThisBuild / resolvers += Resolver.bintrayRepo("colisweb", "maven")
 assemblyMergeStrategy in assembly := {
   case "module-info.class" => MergeStrategy.discard
   case x =>
@@ -14,16 +13,17 @@ assemblyMergeStrategy in assembly := {
 
 val circeVersion = "0.13.0"
 val doobieVersion = "0.8.8"
-val http4sVersion = "0.21.6"
-val scalaTracingVersion = "2.4.1"
+val http4sVersion = "1.0.0-M16"
+val natchezVersion = "0.1.0-M4"
+val catsEffectVersion = "3.0.0-RC2"
 val compilerOptions = Seq(
       "-Ywarn-dead-code",
       "-Ywarn-unused:imports", 
       "-Ywarn-unused:locals", 
       "-Ywarn-unused:patvars",
       "-Ywarn-unused:privates",
-      "-deprecation",
-      "-Xfatal-warnings"
+      "-deprecation"
+      // "-Xfatal-warnings"
     )
 
 lazy val perfTest = (project in file("perf-test"))
@@ -75,12 +75,14 @@ lazy val root = (project in file("."))
         "org.http4s" %% "http4s-circe"
       ).map(_ % http4sVersion) ++
       Seq(
-         "com.colisweb" %% "scala-opentracing-context",
-         "com.colisweb" %% "scala-opentracing-http4s-server-tapir"
-      ).map(_ % scalaTracingVersion) ++ 
+         "org.tpolecat" %% "natchez-jaeger"
+      ).map(_ % natchezVersion) ++ 
       Seq(
         "com.typesafe" % "config" % "1.4.0",
         "org.flywaydb" % "flyway-core" % "6.2.1",
         "io.jaegertracing" % "jaeger-client" % "1.3.2"
-      )
+      ) ++
+      Seq(
+        "org.typelevel" %% "cats-effect"
+      ).map(_ % catsEffectVersion)
   ).dependsOn(shared)
