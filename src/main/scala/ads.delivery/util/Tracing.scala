@@ -1,24 +1,21 @@
 package ads.delivery.util
 
-import io.opentracing.Tracer
-import io.opentracing.Span
-import io.jaegertracing.Configuration
-import cats.effect.{Timer, Sync}
-import com.colisweb.tracing.core.TracingContextBuilder
-import com.colisweb.tracing.context.OpenTracingContext
-import com.colisweb.tracing.context.LoggingTracingContext
-import com.colisweb.tracing.context.NoOpTracingContext
+import cats.effect.kernel.Sync
 import ads.delivery.config.TracingConfig
+import natchez.jaeger.Jaeger
+import natchez.EntryPoint
+import cats.effect.kernel.Resource
+import io.jaegertracing.Configuration.SamplerConfiguration
+import io.jaegertracing.Configuration.ReporterConfiguration
 
 object Tracing {
 
-  def loggingTraceContextBuilder[F[_]: Sync: Timer]
-      : F[TracingContextBuilder[F]] =
-    LoggingTracingContext.builder[F]
+  def loggingTraceContextBuilder[F[_]: Sync]
+      : Resource[F, EntryPoint[F]] = ???
 
-  def jaegarTracingContext[F[_]: Timer: Sync](
+  def jaegarTracingContext[F[_]: Sync](
       tracerConfig: TracingConfig
-  ): F[TracingContextBuilder[F]] = {
+  ): Resource[F, EntryPoint[F]] = {
     val serviceName = tracerConfig.getServiceName
     val host = tracerConfig.getAgentHost
     val port = tracerConfig.getAgentPort
@@ -31,11 +28,16 @@ object Tracing {
       "JAEGER_SAMPLER_MANAGER_HOST_PORT",
       s"$samplingManagerHost:$samplingManagerPort"
     )
-    val configuration = Configuration.fromEnv
-    val tracer: Tracer = configuration.getTracer
-    OpenTracingContext.builder[F, Tracer, Span](tracer)
+    val sampler = SamplerConfiguration.fromEnv()
+    val reporter = ReporterConfiguration.fromEnv()
+    Jaeger.entryPoint[F](system = "ads-stats"){c => 
+      Sync[F].delay {
+        c.withSampler(sampler)
+          .withReporter(reporter)
+          .getTracer
+      }
+    }
   }
 
-  def noOpTracingContext[F[_]: Timer: Sync]: F[TracingContextBuilder[F]] =
-    NoOpTracingContext.builder[F]
+  def noOpTracingContext[F[_]: Sync]: Resource[F,EntryPoint[F]] = ???
 }

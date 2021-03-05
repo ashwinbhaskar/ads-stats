@@ -2,7 +2,6 @@ package ads.delivery
 
 import com.typesafe.config.ConfigFactory
 import scala.concurrent.ExecutionContext
-import doobie.hikari.HikariTransactor
 import cats.effect.{IO, ExitCode, IOApp}
 import ads.delivery.respository.StatsRepositoryImpl
 import ads.delivery.server.Router
@@ -11,8 +10,9 @@ import ads.delivery.config.AllConfigsImpl
 import ads.delivery.respository.Migration
 import ads.delivery.respository.Database
 import ads.delivery.util.Tracing
-import com.colisweb.tracing.core.TracingContextBuilder
 import com.typesafe.scalalogging.Logger
+import natchez.EntryPoint
+import cats.effect.kernel.Resource
 
 object Main extends IOApp {
 
@@ -28,18 +28,24 @@ object Main extends IOApp {
       s"use_no_op_tracer property value is ${System.getProperty("use_no_op_tracer")}"
     )
     logger.debug(s"is no op tracer being used? = $shouldUseNoOpTracer")
-    implicit val tracingContext: TracingContextBuilder[IO] =
+    val tracingContext: Resource[IO, EntryPoint[IO]] =
       if (shouldUseNoOpTracer)
-        Tracing.noOpTracingContext[IO].unsafeRunSync
+        Tracing.noOpTracingContext[IO]
       else
-        Tracing.jaegarTracingContext[IO](configs).unsafeRunSync
+        Tracing.jaegarTracingContext[IO](configs)
 
     implicit val ec = ExecutionContext.global
-    val database = new Database(configs)
-    database.getTransactor.use { t: HikariTransactor[IO] =>
-      val statsRepository = new StatsRepositoryImpl(t)
-      val routes = new Router(statsRepository).routes
-      Server.start[IO](routes, configs)
+    val database = new Database[IO](configs)
+    
+    val routeResource = for {
+      transactor <- database.getTransactor
+      entryPoint <- tracingContext
+    } yield {
+      val statsRepository = new StatsRepositoryImpl[IO](transactor)
+      new Router[IO](statsRepository, entryPoint).routes
     }
+
+    routeResource.use(routes => Server.start[IO](routes, configs))
+
   }
 }

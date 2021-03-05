@@ -1,9 +1,9 @@
 package ads.delivery.server
 
 import scala.util.chaining._
-import cats.effect.IO
 import cats.implicits._
 import cats.data._
+import cats.effect.kernel.{Async, MonadCancel}
 import io.circe.generic.auto._
 import io.circe.Encoder
 import io.circe.Decoder
@@ -23,13 +23,11 @@ import ads.delivery.adt._
 import ads.delivery.Types._
 import ads.delivery.adt.{UnhandledError, JsonDecodingError}
 import ads.delivery.adt.InvalidDateTimeWithoutMillisFormat
-import com.colisweb.tracing.core.TracingContextBuilder
-import com.colisweb.tracing.http.server.TracedHttpRoutes
-import com.colisweb.tracing.http.server.TracedHttpRoutes._
+import org.http4s.HttpRoutes
+import natchez.EntryPoint
 
-class Router(repository: StatsRepository)(implicit
-    val tracingContext: TracingContextBuilder[IO]
-) extends Http4sDsl[IO] {
+class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoint[F]) extends Http4sDsl[F] {
+
 
   private def collectCategories(p: Path): Either[Error, List[Category]] =
     p match {
@@ -43,22 +41,23 @@ class Router(repository: StatsRepository)(implicit
     }
 
   private def decodeBody[T: Decoder](
-      req: Request[IO]
-  ): IO[Either[JsonDecodingError, T]] =
+      req: Request[F]
+  ): F[Either[JsonDecodingError, T]] =
     req
       .decodeJson[T]
       .redeem(
         t => new JsonDecodingError(t.getCause.getMessage).asLeft[T],
         _.asRight[JsonDecodingError]
       )
+
   private def decodeTime(t: String): EitherT[
-    IO,
+    F,
     InvalidDateTimeWithoutMillisFormat.type,
     OffsetDateTimeWithoutMillis
   ] =
     OffsetDateTimeWithoutMillis
       .fromString(t)
-      .pipe(IO.fromTry)
+      .pipe(MonadCancel[F].fromTry)
       .redeem(
         _ =>
           InvalidDateTimeWithoutMillisFormat
@@ -69,8 +68,8 @@ class Router(repository: StatsRepository)(implicit
 
   private def toHttpResponse[T: Encoder](
       r: Result[T],
-      successResponse: => IO[Response[IO]]
-  ): IO[Response[IO]] =
+      successResponse: => F[Response[F]]
+  ): F[Response[F]] =
     r match {
       case Left(error) if error == UnhandledError =>
         InternalServerError(r.asJson)
@@ -78,10 +77,10 @@ class Router(repository: StatsRepository)(implicit
       case Right(_) => successResponse
     }
 
-  val routes = TracedHttpRoutes[IO] {
-    case (GET -> Root / "ping") using _ => Ok("pong")
-    case (req @ POST -> Root / "ads" / "delivery") using tracingContext =>
-      tracingContext.span("Record delivery router").use { tcx =>
+  val routes = HttpRoutes.of[F] {
+    case (GET -> Root / "ping")  => Ok("pong")
+    case (req @ POST -> Root / "ads" / "delivery")  =>
+      entryPoint.root("POST @ ads/delivery").use { tcx =>
         val result = for {
           delivery <- EitherT(decodeBody[Delivery](req))
           r <- EitherT(repository.recordDelivery(delivery)(tcx))
@@ -90,8 +89,8 @@ class Router(repository: StatsRepository)(implicit
         result.value.flatMap(toHttpResponse(_, Created()))
       }
 
-    case (req @ POST -> Root / "ads" / "install") using tracingContext =>
-      tracingContext.span("Record install router").use { trx =>
+    case (req @ POST -> Root / "ads" / "install")  =>
+      entryPoint.root("POST @ ads/install").use { trx =>
         val result = for {
           install <- EitherT(decodeBody[Install](req))
           r <- EitherT(repository.recordInstall(install)(trx))
@@ -100,8 +99,8 @@ class Router(repository: StatsRepository)(implicit
         result.value.flatMap(toHttpResponse(_, Created()))
       }
 
-    case (req @ POST -> Root / "ads" / "click") using tracingContext =>
-      tracingContext.span("Record click router").use { tcx =>
+    case (req @ POST -> Root / "ads" / "click") =>
+      entryPoint.root("POST @ ads/click").use { tcx =>
         val result = for {
           click <- EitherT(decodeBody[Click](req))
           r <- EitherT(repository.recordClick(click)(tcx))
@@ -110,8 +109,8 @@ class Router(repository: StatsRepository)(implicit
         result.value.flatMap(toHttpResponse(_, Created()))
       }
 
-    case GET -> Root / "ads" / "statistics" / "time" / start / end / "overall" using tracingContext =>
-      tracingContext.span("Get stats router").use { tcx =>
+    case GET -> Root / "ads" / "statistics" / "time" / start / end / "overall" =>
+      entryPoint.root("GET @ ads/statistics/time overall").use { tcx =>
         val result = for {
           startTime <- decodeTime(start)
           endTime <- decodeTime(end)
@@ -120,10 +119,10 @@ class Router(repository: StatsRepository)(implicit
 
         result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
       }
-    case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories using tracingContext =>
-      tracingContext.span("Get categorized stats router").use { tcx =>
+    case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories =>
+      entryPoint.root("GET ads/statistics/time categories").use { tcx =>
         val result = for {
-          categ <- EitherT(IO(collectCategories(categories)))
+          categ <- EitherT(Async[F].delay(collectCategories(categories)))
           startTime <- decodeTime(start)
           endTime <- decodeTime(end)
           stats <- EitherT(

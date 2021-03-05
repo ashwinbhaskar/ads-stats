@@ -4,36 +4,35 @@ import ads.delivery.model._
 import ads.delivery.Types._
 import ads.delivery.adt.OffsetDateTimeWithoutMillis
 import ads.delivery.adt.Category
-import cats.effect.IO
-import com.colisweb.tracing.core.TracingContext
+import natchez.Span
 
-trait StatsRepository {
+trait StatsRepository[F[_]] {
 
   def recordDelivery(d: Delivery)(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Unit]
+      tracingContext: Span[F]
+  ): FResult[F, Unit]
 
   def recordInstall(i: Install)(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Unit]
+      tracingContext: Span[F]
+  ): FResult[F, Unit]
 
   def recordClick(c: Click)(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Unit]
+      tracingContext: Span[F]
+  ): FResult[F, Unit]
 
   def getStats(
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis
   )(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Stats]
+      tracingContext: Span[F]
+  ): FResult[F, Stats]
 
   def getStats(
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis,
       categories: List[Category]
   )(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[List[CategorizedStats]]
+      tracingContext: Span[F]
+  ): FResult[F, List[CategorizedStats]]
 
 }
