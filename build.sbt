@@ -11,7 +11,7 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-val circeVersion = "0.13.0"
+val circeVersion = "0.14.0-M6"
 val doobieVersion = "1.0.0-M2"
 val http4sVersion = "1.0.0-M21"
 val natchezVersion = "0.1.2"
