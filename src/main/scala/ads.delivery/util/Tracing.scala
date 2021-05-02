@@ -4,14 +4,14 @@ import cats.effect.kernel.Sync
 import ads.delivery.config.TracingConfig
 import natchez.jaeger.Jaeger
 import natchez.EntryPoint
+import natchez.noop.NoopEntrypoint
 import cats.effect.kernel.Resource
 import io.jaegertracing.Configuration.SamplerConfiguration
 import io.jaegertracing.Configuration.ReporterConfiguration
 
 object Tracing {
 
-  def loggingTraceContextBuilder[F[_]: Sync]
-      : Resource[F, EntryPoint[F]] = ???
+  def loggingTraceContextBuilder[F[_]: Sync]: Resource[F, EntryPoint[F]] = ???
 
   def jaegarTracingContext[F[_]: Sync](
       tracerConfig: TracingConfig
@@ -30,14 +30,18 @@ object Tracing {
     )
     val sampler = SamplerConfiguration.fromEnv()
     val reporter = ReporterConfiguration.fromEnv()
-    Jaeger.entryPoint[F](system = "ads-stats"){c => 
+    Jaeger.entryPoint[F](system = "ads-stats") { c =>
       Sync[F].delay {
         c.withSampler(sampler)
           .withReporter(reporter)
           .getTracer
       }
     }
+
   }
 
-  def noOpTracingContext[F[_]: Sync]: Resource[F,EntryPoint[F]] = ???
+  def noOpTracingContext[F[_]: Sync]: Resource[F, EntryPoint[F]] = {
+    val syncF = implicitly[Sync[F]]
+    Resource.make(syncF.delay(NoopEntrypoint[F]()))(_ => syncF.unit)
+  }
 }

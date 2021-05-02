@@ -75,7 +75,8 @@ lazy val root = (project in file("."))
         "org.http4s" %% "http4s-circe"
       ).map(_ % http4sVersion) ++
       Seq(
-         "org.tpolecat" %% "natchez-jaeger"
+         "org.tpolecat" %% "natchez-jaeger",
+         "org.tpolecat" %% "natchez-noop"
       ).map(_ % natchezVersion) ++ 
       Seq(
         "com.typesafe" % "config" % "1.4.0",
