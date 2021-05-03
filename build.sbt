@@ -16,6 +16,7 @@ val doobieVersion = "1.0.0-M2"
 val http4sVersion = "1.0.0-M21"
 val natchezVersion = "0.1.2"
 val catsEffectVersion = "3.1.0"
+val testContainerVersion = "0.39.3"
 val compilerOptions = Seq(
       "-Ywarn-dead-code",
       "-Ywarn-unused:imports", 
@@ -25,6 +26,12 @@ val compilerOptions = Seq(
       "-deprecation"
       // "-Xfatal-warnings"
     )
+
+
+lazy val testContainers = Seq(
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainerVersion,
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainerVersion
+)
 
 lazy val perfTest = (project in file("perf-test"))
   .settings(
@@ -39,7 +46,7 @@ lazy val perfTest = (project in file("perf-test"))
       "co.fs2" %% "fs2-core" % "2.4.0"
     ),
     scalacOptions ++= compilerOptions
-  ).dependsOn(shared)
+  ).dependsOn(shared % "compile->compile;test->test")
 
 lazy val shared = (project in file("shared"))
   .settings(
@@ -47,7 +54,7 @@ lazy val shared = (project in file("shared"))
     libraryDependencies ++=Seq(
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-    ),
+    ) ++ testContainers.map(_ % Test),
     scalacOptions ++= compilerOptions
   )
 
@@ -86,4 +93,4 @@ lazy val root = (project in file("."))
       Seq(
         "org.typelevel" %% "cats-effect"
       ).map(_ % catsEffectVersion)
-  ).dependsOn(shared)
+  ).dependsOn(shared % "compile->compile;test->test")
