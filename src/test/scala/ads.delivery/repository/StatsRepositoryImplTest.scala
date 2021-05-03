@@ -1,6 +1,5 @@
 package ads.delivery.repository
 
-import scala.concurrent.ExecutionContext.global
 import scala.util.chaining._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
@@ -8,15 +7,16 @@ import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
 import doobie.implicits._
 import doobie.util.fragment.Fragment
-import cats.effect.{IO, ContextShift}
-import cats.effect.Timer
-import cats.effect.implicits._
-import cats.effect.Bracket
-import com.typesafe.config.ConfigFactory
+import cats.effect.kernel.Resource
+import cats.effect.IO
+import cats.effect.unsafe.implicits.global
+import natchez.EntryPoint
+import com.dimafeng.testcontainers.{PostgreSQLContainer, ForAllTestContainer}
+import org.testcontainers.utility.DockerImageName
 import java.net.URL
 import java.util.UUID
 import ads.delivery.respository.{Migration, StatsRepositoryImpl}
-import ads.delivery.config.AllConfigsImpl
+import ads.delivery.config.DBConfig
 import ads.delivery.adt._
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -24,25 +24,15 @@ import ads.delivery.adt.OffsetDateTimeWithMillis
 import ads.delivery.model.{Install, Click, Delivery, Stats}
 import ads.delivery.model.CategorizedStats
 import ads.delivery.util.Tracing
-import ads.delivery.Types._
-import com.colisweb.tracing.core.TracingContext
-import com.colisweb.tracing.core.TracingContextBuilder
-import com.colisweb.tracing.core.implicits._
 
-class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
+class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestContainer {
 
   private val formatterWithoutMillis =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
   private val formatterWithMillis = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
-  implicit val ioContextShift: ContextShift[IO] =
-    IO.contextShift(global)
-
-  implicit val timer: Timer[IO] =
-    IO.timer(global)
-
-  val tracingContextBuilder: TracingContextBuilder[IO] =
-    Tracing.noOpTracingContext[IO].unsafeRunSync
+  val entryPoint: Resource[IO, EntryPoint[IO]] =
+    Tracing.noOpTracingContext[IO]
 
   private def timeWithoutMS(t: String): OffsetDateTimeWithoutMillis =
     OffsetDateTime
@@ -60,20 +50,35 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     sql"DELETE FROM click"
   )
 
-  private def withTransactor(testCode: Transactor[IO] => Any) {
-    val t = ConfigFactory.load("test.conf")
-    val allConfigs = new AllConfigsImpl(t)
-    Migration.migrate(allConfigs)
+  private def withTransactor(testCode: Transactor[IO] => Any) = {
+    // Thread.sleep(20000)
+
+    val dbConfig = new DBConfig {
+      override def getUrl: String = container.jdbcUrl
+      
+      override def getUser: String = container.username
+      
+      override def getPass: String = container.password
+      
+      override def getDriverClassName: String = container.driverClassName
+      
+      override def getMaxThreads: Int = 10
+      
+    }
+    Migration.migrate(dbConfig)
     val transactor: Aux[IO, Unit] =
       Transactor.fromDriverManager[IO](
-        allConfigs.getDriverClassName,
-        allConfigs.getUrl,
-        allConfigs.getUser,
-        allConfigs.getPass
+        dbConfig.getDriverClassName,
+        dbConfig.getUrl,
+        dbConfig.getUser,
+        dbConfig.getPass
       )
     deleteQueries.map(_.update.run.transact(transactor).unsafeRunSync())
     testCode(transactor)
   }
+
+  override val container: PostgreSQLContainer =  
+    PostgreSQLContainer(DockerImageName.parse("postgres:12"), "ads_stats", "postgres", "postgres")
 
   "Recording a delivery" should "be successfull" in withTransactor { t =>
     val repository = new StatsRepositoryImpl(t)
@@ -82,12 +87,13 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val delivery = Delivery(1, deliveryId, time, Chrome, Android, site)
 
-    val resource = tracingContextBuilder.build("foo-operation")
-    resource
-      .use[IO, Result[Unit]](tr => repository.recordDelivery(delivery)(tr))
+    entryPoint
+      .flatMap(_.root("Record Delivery"))
+      .use(tr => repository.recordDelivery(delivery)(tr))
       .unsafeRunSync shouldBe ('Right)
-    resource
-      .use[IO, Result[Unit]](tr => repository.recordDelivery(delivery)(tr))
+    entryPoint
+      .flatMap(_.root("Record Delivery"))
+      .use(tr => repository.recordDelivery(delivery)(tr))
       .unsafeRunSync shouldEqual Left(
       AlreadyRecorded
     )
@@ -100,9 +106,9 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val install = Install(installId, clickId, time)
 
-    val resource = tracingContextBuilder.build("foo-operation")
-    resource
-      .use[IO, Result[Unit]](tr => repository.recordInstall(install)(tr))
+     entryPoint
+      .flatMap(_.root("Record Delivery"))
+      .use(tr => repository.recordInstall(install)(tr))
       .unsafeRunSync should be('Right)
   }
 
@@ -113,9 +119,9 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val click = Click(deliveryId, clickId, time)
 
-    val resource = tracingContextBuilder.build("foo-operation")
-    resource
-      .use[IO, Result[Unit]](tr => repository.recordClick(click)(tr))
+    entryPoint
+      .flatMap(_.root("Record Click"))
+      .use(tr => repository.recordClick(click)(tr))
       .unsafeRunSync should be('Right)
   }
 
@@ -142,10 +148,10 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       )
     )
 
-    val resource = tracingContextBuilder.build("foo-operation")
     deliveries.foreach(d =>
-      resource
-        .use[IO, Result[Unit]](tr => repository.recordDelivery(d)(tr))
+      entryPoint
+        .flatMap(_.root("Record Delivery"))
+        .use(tr => repository.recordDelivery(d)(tr))
         .unsafeRunSync
     )
 
@@ -164,8 +170,9 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       )
     )
     clicks.foreach { c =>
-      resource
-        .use[IO, Result[Unit]](tr => repository.recordClick(c)(tr))
+       entryPoint
+        .flatMap(_.root("Record Click"))
+        .use(tr => repository.recordClick(c)(tr))
         .unsafeRunSync
     }
 
@@ -184,16 +191,18 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       )
     )
     installs.foreach { i =>
-      resource
-        .use[IO, Result[Unit]](tr => repository.recordInstall(i)(tr))
+       entryPoint
+        .flatMap(_.root("Record Install"))
+        .use(tr => repository.recordInstall(i)(tr))
         .unsafeRunSync
     }
 
     val start = timeWithoutMS("2018-01-07T14:30:00+0000")
     val end = timeWithoutMS("2019-05-07T14:30:00+0000")
 
-    resource
-      .use[IO, Result[Stats]](tr => repository.getStats(start, end)(tr))
+     entryPoint
+      .flatMap(_.root("Get Stats"))
+      .use(tr => repository.getStats(start, end)(tr))
       .unsafeRunSync shouldEqual Right(
       Stats(1, 1, 1)
     )
@@ -221,10 +230,10 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
         new URL("http://goo.com")
       )
     )
-    val resource = tracingContextBuilder.build("foo-operation")
     deliveries.foreach(d =>
-      resource
-        .use[IO, Result[Unit]](tr => repository.recordDelivery(d)(tr))
+       entryPoint
+        .flatMap(_.root("Record Delivery"))
+        .use(tr => repository.recordDelivery(d)(tr))
         .unsafeRunSync
     )
 
@@ -243,8 +252,9 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       )
     )
     clicks.foreach { c =>
-      resource
-        .use[IO, Result[Unit]](tr => repository.recordClick(c)(tr))
+       entryPoint
+        .flatMap(_.root("Record Click"))
+        .use(tr => repository.recordClick(c)(tr))
         .unsafeRunSync
     }
 
@@ -263,8 +273,9 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       )
     )
     installs.foreach { i =>
-      resource
-        .use[IO, Result[Unit]](tr => repository.recordInstall(i)(tr))
+       entryPoint
+        .flatMap(_.root("Record Install"))
+        .use(tr => repository.recordInstall(i)(tr))
         .unsafeRunSync
     }
 
@@ -275,8 +286,9 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
       CategorizedStats(Map(OSCategory -> "IOS"), Stats(1, 1, 1)),
       CategorizedStats(Map(OSCategory -> "Android"), Stats(1, 1, 1))
     )
-    resource
-      .use[IO, Result[List[CategorizedStats]]](tr =>
+     entryPoint
+      .flatMap(_.root("Get Stats"))
+      .use(tr =>
         repository
           .getStats(start, end, List(OSCategory))(tr)
       )

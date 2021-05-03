@@ -3,15 +3,15 @@ package ads.delivery.respository
 import doobie.util.transactor.Transactor
 import doobie.implicits._
 import doobie.postgres.implicits._
-import cats.effect.IO
 import cats.implicits._
 import ads.delivery.adt._
 import ads.delivery.Types._
 import ads.delivery.model.{Stats, Install, Delivery, Click, CategorizedStats}
 import ads.delivery.implicits.DbConverters._
-import com.colisweb.tracing.core.TracingContext
+import natchez.Span
 
-class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
+class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
+    extends StatsRepository[F] {
 
   private val ifInsertSuccess: Int => Either[Error, Unit] = { _ =>
     ().asRight[Error]
@@ -27,7 +27,7 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
 
   override def recordDelivery(
       d: Delivery
-  )(implicit tracingContext: TracingContext[IO]): IOResult[Unit] =
+  )(implicit tracingContext: Span[F]): FResult[F, Unit] =
     tracingContext.span("Record delivery repository") use { _ =>
       sql"INSERT INTO delivery(delivery_id, advertisement_id, t, browser, os, site) VALUES (${d.deliveryId}, ${d.advertisementId},${d.time},${d.browser},${d.os},${d.site})".update.run
         .transact(transactor)
@@ -35,8 +35,8 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
     }
 
   override def recordInstall(i: Install)(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Unit] =
+      tracingContext: Span[F]
+  ): FResult[F, Unit] =
     tracingContext.span("Record install repository") use { _ =>
       sql"INSERT INTO install(install_id, click_id, t) VALUES(${i.installId}, ${i.clickId}, ${i.time})".update.run
         .transact(transactor)
@@ -44,8 +44,8 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
     }
 
   override def recordClick(c: Click)(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Unit] =
+      tracingContext: Span[F]
+  ): FResult[F, Unit] =
     tracingContext.span("Record click repository") use { _ =>
       sql"INSERT INTO click(delivery_id, click_id, t) VALUES(${c.deliveryId}, ${c.clickId}, ${c.time})".update.run
         .transact(transactor)
@@ -56,10 +56,10 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
       start: OffsetDateTimeWithoutMillis,
       end: OffsetDateTimeWithoutMillis
   )(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[Stats] =
+      tracingContext: Span[F]
+  ): FResult[F, Stats] =
     tracingContext.span("Get stats repository") use { _ =>
-      val result: IO[Stats] =
+      val result: F[Stats] =
         for {
           deliveries <-
             sql"SELECT count(*) FROM delivery WHERE t BETWEEN $start AND $end"
@@ -88,10 +88,10 @@ class StatsRepositoryImpl(transactor: Transactor[IO]) extends StatsRepository {
       end: OffsetDateTimeWithoutMillis,
       categories: List[Category]
   )(implicit
-      tracingContext: TracingContext[IO]
-  ): IOResult[List[CategorizedStats]] =
+      tracingContext: Span[F]
+  ): FResult[F, List[CategorizedStats]] =
     tracingContext.span("Get categorized stats repository") use { _ =>
-      val result: IO[List[CategorizedStats]] =
+      val result: F[List[CategorizedStats]] =
         for {
           deliveries <-
             sql"SELECT advertisement_id, delivery_id, t, browser, os, site FROM delivery WHERE t BETWEEN $start AND $end"

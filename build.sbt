@@ -4,7 +4,6 @@ ThisBuild / scalaVersion := "2.13.2"
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ashwinbhaskar"
 ThisBuild / organizationName := "example"
-ThisBuild / resolvers += Resolver.bintrayRepo("colisweb", "maven")
 assemblyMergeStrategy in assembly := {
   case "module-info.class" => MergeStrategy.discard
   case x =>
@@ -12,19 +11,27 @@ assemblyMergeStrategy in assembly := {
     oldStrategy(x)
 }
 
-val circeVersion = "0.13.0"
-val doobieVersion = "0.8.8"
-val http4sVersion = "0.21.6"
-val scalaTracingVersion = "2.4.1"
+val circeVersion = "0.14.0-M6"
+val doobieVersion = "1.0.0-M2"
+val http4sVersion = "1.0.0-M21"
+val natchezVersion = "0.1.2"
+val catsEffectVersion = "3.1.0"
+val testContainerVersion = "0.39.3"
 val compilerOptions = Seq(
       "-Ywarn-dead-code",
       "-Ywarn-unused:imports", 
       "-Ywarn-unused:locals", 
       "-Ywarn-unused:patvars",
       "-Ywarn-unused:privates",
-      "-deprecation",
-      "-Xfatal-warnings"
+      "-deprecation"
+      // "-Xfatal-warnings"
     )
+
+
+lazy val testContainers = Seq(
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % testContainerVersion,
+  "com.dimafeng" %% "testcontainers-scala-scalatest" % testContainerVersion
+)
 
 lazy val perfTest = (project in file("perf-test"))
   .settings(
@@ -39,7 +46,7 @@ lazy val perfTest = (project in file("perf-test"))
       "co.fs2" %% "fs2-core" % "2.4.0"
     ),
     scalacOptions ++= compilerOptions
-  ).dependsOn(shared)
+  ).dependsOn(shared % "compile->compile;test->test")
 
 lazy val shared = (project in file("shared"))
   .settings(
@@ -47,7 +54,7 @@ lazy val shared = (project in file("shared"))
     libraryDependencies ++=Seq(
       "ch.qos.logback" % "logback-classic" % "1.2.3",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
-    ),
+    ) ++ testContainers.map(_ % Test),
     scalacOptions ++= compilerOptions
   )
 
@@ -75,12 +82,15 @@ lazy val root = (project in file("."))
         "org.http4s" %% "http4s-circe"
       ).map(_ % http4sVersion) ++
       Seq(
-         "com.colisweb" %% "scala-opentracing-context",
-         "com.colisweb" %% "scala-opentracing-http4s-server-tapir"
-      ).map(_ % scalaTracingVersion) ++ 
+         "org.tpolecat" %% "natchez-jaeger",
+         "org.tpolecat" %% "natchez-noop"
+      ).map(_ % natchezVersion) ++ 
       Seq(
         "com.typesafe" % "config" % "1.4.0",
         "org.flywaydb" % "flyway-core" % "6.2.1",
         "io.jaegertracing" % "jaeger-client" % "1.3.2"
-      )
-  ).dependsOn(shared)
+      ) ++
+      Seq(
+        "org.typelevel" %% "cats-effect"
+      ).map(_ % catsEffectVersion)
+  ).dependsOn(shared % "compile->compile;test->test")
