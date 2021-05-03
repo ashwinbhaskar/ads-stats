@@ -11,11 +11,12 @@ import cats.effect.kernel.Resource
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import natchez.EntryPoint
-import com.typesafe.config.ConfigFactory
+import com.dimafeng.testcontainers.{PostgreSQLContainer, ForAllTestContainer}
+import org.testcontainers.utility.DockerImageName
 import java.net.URL
 import java.util.UUID
 import ads.delivery.respository.{Migration, StatsRepositoryImpl}
-import ads.delivery.config.AllConfigsImpl
+import ads.delivery.config.DBConfig
 import ads.delivery.adt._
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
@@ -24,7 +25,7 @@ import ads.delivery.model.{Install, Click, Delivery, Stats}
 import ads.delivery.model.CategorizedStats
 import ads.delivery.util.Tracing
 
-class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
+class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestContainer {
 
   private val formatterWithoutMillis =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -50,19 +51,34 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
   )
 
   private def withTransactor(testCode: Transactor[IO] => Any) = {
-    val t = ConfigFactory.load("test.conf")
-    val allConfigs = new AllConfigsImpl(t)
-    Migration.migrate(allConfigs)
+    // Thread.sleep(20000)
+
+    val dbConfig = new DBConfig {
+      override def getUrl: String = container.jdbcUrl
+      
+      override def getUser: String = container.username
+      
+      override def getPass: String = container.password
+      
+      override def getDriverClassName: String = container.driverClassName
+      
+      override def getMaxThreads: Int = 10
+      
+    }
+    Migration.migrate(dbConfig)
     val transactor: Aux[IO, Unit] =
       Transactor.fromDriverManager[IO](
-        allConfigs.getDriverClassName,
-        allConfigs.getUrl,
-        allConfigs.getUser,
-        allConfigs.getPass
+        dbConfig.getDriverClassName,
+        dbConfig.getUrl,
+        dbConfig.getUser,
+        dbConfig.getPass
       )
     deleteQueries.map(_.update.run.transact(transactor).unsafeRunSync())
     testCode(transactor)
   }
+
+  override val container: PostgreSQLContainer =  
+    PostgreSQLContainer(DockerImageName.parse("postgres:12"), "ads_stats", "postgres", "postgres")
 
   "Recording a delivery" should "be successfull" in withTransactor { t =>
     val repository = new StatsRepositoryImpl(t)
@@ -260,7 +276,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers {
        entryPoint
         .flatMap(_.root("Record Install"))
         .use(tr => repository.recordInstall(i)(tr))
-        // .unsafeRunSync
+        .unsafeRunSync
     }
 
     val start = timeWithoutMS("2017-01-07T14:30:00+0000")
