@@ -2,8 +2,6 @@ package ads.delivery.implicits
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import io.circe.Decoder
-import io.circe.Json
 import io.circe.parser.decode
 import io.circe.generic.auto._
 import scala.util.chaining._
@@ -12,7 +10,6 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.net.URL
 import ads.delivery.implicits.Decoders._
-import ads.delivery.adt.Browser
 import ads.delivery.adt._
 import ads.delivery.model.Interval
 import ads.delivery.model.Click

@@ -3,7 +3,6 @@ package ads.delivery.implicits
 import scala.util.chaining._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import io.circe.Encoder
 import io.circe.syntax._
 import io.circe.literal._
 import io.circe.generic.auto._
@@ -13,7 +12,6 @@ import ads.delivery.implicits.Encoders._
 import java.util.UUID
 import java.time.format.DateTimeFormatter
 import java.net.URL
-import java.time.OffsetTime
 import java.time.OffsetDateTime
 
 class EncodersTest extends AnyFlatSpec with Matchers {
