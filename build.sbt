@@ -1,12 +1,15 @@
 import Dependencies._
 
-ThisBuild / scalaVersion := "2.13.2"
+ThisBuild / scalaVersion := "2.13.5"
 ThisBuild / version := "0.1.0"
 ThisBuild / organization := "com.ashwinbhaskar"
 ThisBuild / organizationName := "example"
+
+val conflictingFiles = Set("Generated", "ManagedBean", "PostConstruct", "PreDestroy", "Priority", "Resource$AuthenticationType", "Resource", "DeclareRoles", "DenyAll", "RolesAllowed", "RunAs", "DataSourceDefinition", "DataSourceDefinitions", "Resources", "PermitAll").map(_ + ".class")
 assemblyMergeStrategy in assembly := {
   case "module-info.class" => MergeStrategy.discard
-  case x =>
+  case x if conflictingFiles.exists(x.endsWith) => MergeStrategy.last
+  case x => 
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
