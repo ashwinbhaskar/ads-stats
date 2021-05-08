@@ -24,10 +24,10 @@ An HTTP Server, packaged with postgres, jaegar and perf-test module in a docker,
 
 # Setup & Run
 - `make setup_server` builds a fat jar out of the server (ads-stats).
-- `make run_server` packages `postgres`, `jaegar` and `ads-stats-app`(server) into a docker container and expose `127.0.0.1:8080` to the outside world.
 - `make setup_perf_test` builds a fat jar out of the `perf-test` sub project.
+- `make run_server` packages `postgres`, `jaegar` and `ads-stats-app`(server) into a docker container and expose `127.0.0.1:8080` to the outside world.
 - `make perf_test_time_travel` runs `ads-stats-app` with `no-op-tracer` and runs the `perf-test` with the arguments supplied. Use this to pre-populate your database with data while without tracing it. Eg: `make perf_test_time_travel deliveries=500 delivery_to_click_ratio=0.5 click_to_install_ratio=0.5`. This will insert `500` deliveries, and clicks and installs will be inserted according to the ratio specified. Note that you will not be able to see any traces in the `jaegar` dashboard after you run the test.
-- `make perf_test` runs `ads-stats` with a valid tracer and the traces will show up on the `jaegar` dashboard. Eg: `make perf_test delivery_to_click_ratio=0.5 click_to_install_ratio=0.5 running_time_in_seconds=50`. This will run the perf-test for 50 seconds and during this time the inserts will happen in the ratio specified.
+- `make perf_test` runs `ads-stats` with a valid tracer and the traces will show up on the `jaegar` dashboard. Eg: `make perf_test delivery_to_click_ratio=0.5 click_to_install_ratio=0.5 delivery_to_query_ratio=0.25 running_time_in_seconds=50`. This will run the perf-test for 50 seconds and during this time the inserts will happen in the ratio specified.
 
 
 # Tracing
