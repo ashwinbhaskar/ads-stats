@@ -67,6 +67,8 @@ lazy val root = (project in file("."))
     fork := true,
     cancelable := true,
     scalacOptions ++= compilerOptions,
+    semanticdbEnabled := true, // enable SemanticDB
+    semanticdbVersion := scalafixSemanticdb.revision, // use Scalafix compatible version
     libraryDependencies ++= Seq(
       "io.circe" %% "circe-core",
       "io.circe" %% "circe-generic",
