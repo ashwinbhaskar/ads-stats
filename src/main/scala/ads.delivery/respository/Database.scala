@@ -2,11 +2,13 @@ package ads.delivery.respository
 
 import scala.concurrent.ExecutionContext
 import ads.delivery.config.DBConfig
-import cats.effect.kernel.{Sync, Async, Resource}
+import cats.effect.kernel.{Async, Resource}
 import doobie.hikari._
 import doobie.util.ExecutionContexts
 
-class Database[F[_] : Sync : Async](config: DBConfig)(implicit val ec: ExecutionContext) {
+class Database[F[_]: Async](config: DBConfig)(implicit
+    val ec: ExecutionContext
+) {
 
   private lazy val transactor: Resource[F, HikariTransactor[F]] =
     for {
