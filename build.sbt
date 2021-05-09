@@ -46,7 +46,7 @@ lazy val perfTest = (project in file("perf-test"))
       "com.github.pureconfig" %% "pureconfig" % "0.13.0",
       "org.scalacheck" %% "scalacheck" % "1.14.1",
       "org.typelevel" %% "cats-effect" % "2.1.4",
-      "co.fs2" %% "fs2-core" % "2.4.0"
+      "co.fs2" %% "fs2-core" % "3.0.2"
     ),
     scalacOptions ++= compilerOptions
   ).dependsOn(shared % "compile->compile;test->test")
