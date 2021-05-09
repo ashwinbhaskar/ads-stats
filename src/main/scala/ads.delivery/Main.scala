@@ -36,7 +36,7 @@ object Main extends IOApp {
 
     implicit val ec = ExecutionContext.global
     val database = new Database[IO](configs)
-    
+
     val routeResource = for {
       transactor <- database.getTransactor
       entryPoint <- tracingContext

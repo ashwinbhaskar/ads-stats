@@ -25,7 +25,10 @@ import ads.delivery.model.{Install, Click, Delivery, Stats}
 import ads.delivery.model.CategorizedStats
 import ads.delivery.util.Tracing
 
-class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestContainer {
+class StatsRepositoryImplTest
+    extends AnyFlatSpec
+    with Matchers
+    with ForAllTestContainer {
 
   private val formatterWithoutMillis =
     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
@@ -55,15 +58,15 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
 
     val dbConfig = new DBConfig {
       override def getUrl: String = container.jdbcUrl
-      
+
       override def getUser: String = container.username
-      
+
       override def getPass: String = container.password
-      
+
       override def getDriverClassName: String = container.driverClassName
-      
+
       override def getMaxThreads: Int = 10
-      
+
     }
     Migration.migrate(dbConfig)
     val transactor: Aux[IO, Unit] =
@@ -77,8 +80,13 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
     testCode(transactor)
   }
 
-  override val container: PostgreSQLContainer =  
-    PostgreSQLContainer(DockerImageName.parse("postgres:12"), "ads_stats", "postgres", "postgres")
+  override val container: PostgreSQLContainer =
+    PostgreSQLContainer(
+      DockerImageName.parse("postgres:12"),
+      "ads_stats",
+      "postgres",
+      "postgres"
+    )
 
   "Recording a delivery" should "be successfull" in withTransactor { t =>
     val repository = new StatsRepositoryImpl(t)
@@ -106,7 +114,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
     val time = OffsetDateTimeWithMillis(OffsetDateTime.now)
     val install = Install(installId, clickId, time)
 
-     entryPoint
+    entryPoint
       .flatMap(_.root("Record Delivery"))
       .use(tr => repository.recordInstall(install)(tr))
       .unsafeRunSync should be('Right)
@@ -170,7 +178,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
       )
     )
     clicks.foreach { c =>
-       entryPoint
+      entryPoint
         .flatMap(_.root("Record Click"))
         .use(tr => repository.recordClick(c)(tr))
         .unsafeRunSync
@@ -191,7 +199,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
       )
     )
     installs.foreach { i =>
-       entryPoint
+      entryPoint
         .flatMap(_.root("Record Install"))
         .use(tr => repository.recordInstall(i)(tr))
         .unsafeRunSync
@@ -200,7 +208,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
     val start = timeWithoutMS("2018-01-07T14:30:00+0000")
     val end = timeWithoutMS("2019-05-07T14:30:00+0000")
 
-     entryPoint
+    entryPoint
       .flatMap(_.root("Get Stats"))
       .use(tr => repository.getStats(start, end)(tr))
       .unsafeRunSync shouldEqual Right(
@@ -231,7 +239,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
       )
     )
     deliveries.foreach(d =>
-       entryPoint
+      entryPoint
         .flatMap(_.root("Record Delivery"))
         .use(tr => repository.recordDelivery(d)(tr))
         .unsafeRunSync
@@ -252,7 +260,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
       )
     )
     clicks.foreach { c =>
-       entryPoint
+      entryPoint
         .flatMap(_.root("Record Click"))
         .use(tr => repository.recordClick(c)(tr))
         .unsafeRunSync
@@ -273,7 +281,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
       )
     )
     installs.foreach { i =>
-       entryPoint
+      entryPoint
         .flatMap(_.root("Record Install"))
         .use(tr => repository.recordInstall(i)(tr))
         .unsafeRunSync
@@ -286,7 +294,7 @@ class StatsRepositoryImplTest extends AnyFlatSpec with Matchers with ForAllTestC
       CategorizedStats(Map(OSCategory -> "IOS"), Stats(1, 1, 1)),
       CategorizedStats(Map(OSCategory -> "Android"), Stats(1, 1, 1))
     )
-     entryPoint
+    entryPoint
       .flatMap(_.root("Get Stats"))
       .use(tr =>
         repository
