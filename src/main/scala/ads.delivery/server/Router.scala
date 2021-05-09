@@ -26,8 +26,10 @@ import ads.delivery.adt.InvalidDateTimeWithoutMillisFormat
 import org.http4s.HttpRoutes
 import natchez.EntryPoint
 
-class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoint[F]) extends Http4sDsl[F] {
-
+class Router[F[_]: Async](
+    repository: StatsRepository[F],
+    entryPoint: EntryPoint[F]
+) extends Http4sDsl[F] {
 
   private def collectCategories(p: Path): Either[Error, List[Category]] =
     p match {
@@ -78,9 +80,9 @@ class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoin
     }
 
   val routes = HttpRoutes.of[F] {
-    case (GET -> Root / "ping")  => Ok("pong")
-    case (req @ POST -> Root / "ads" / "delivery")  =>
-      entryPoint.root("POST @ ads/delivery").use { tcx =>
+    case (GET -> Root / "ping") => Ok("pong")
+    case (req @ POST -> Root / "ads" / "delivery") =>
+      entryPoint.root("Delivery - Router").use { tcx =>
         val result = for {
           delivery <- EitherT(decodeBody[Delivery](req))
           r <- EitherT(repository.recordDelivery(delivery)(tcx))
@@ -89,8 +91,8 @@ class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoin
         result.value.flatMap(toHttpResponse(_, Created()))
       }
 
-    case (req @ POST -> Root / "ads" / "install")  =>
-      entryPoint.root("POST @ ads/install").use { trx =>
+    case (req @ POST -> Root / "ads" / "install") =>
+      entryPoint.root("Install - Router").use { trx =>
         val result = for {
           install <- EitherT(decodeBody[Install](req))
           r <- EitherT(repository.recordInstall(install)(trx))
@@ -100,7 +102,7 @@ class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoin
       }
 
     case (req @ POST -> Root / "ads" / "click") =>
-      entryPoint.root("POST @ ads/click").use { tcx =>
+      entryPoint.root("Click - Router").use { tcx =>
         val result = for {
           click <- EitherT(decodeBody[Click](req))
           r <- EitherT(repository.recordClick(click)(tcx))
@@ -110,7 +112,7 @@ class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoin
       }
 
     case GET -> Root / "ads" / "statistics" / "time" / start / end / "overall" =>
-      entryPoint.root("GET @ ads/statistics/time overall").use { tcx =>
+      entryPoint.root("Overall stats - Router").use { tcx =>
         val result = for {
           startTime <- decodeTime(start)
           endTime <- decodeTime(end)
@@ -120,7 +122,7 @@ class Router[F[_] : Async](repository: StatsRepository[F], entryPoint: EntryPoin
         result.value.flatMap(r => toHttpResponse(r, Ok(r.asJson)))
       }
     case GET -> "ads" /: "statistics" /: "time" /: start /: end /: categories =>
-      entryPoint.root("GET ads/statistics/time categories").use { tcx =>
+      entryPoint.root("Categorised stats - Router").use { tcx =>
         val result = for {
           categ <- EitherT(Async[F].delay(collectCategories(categories)))
           startTime <- decodeTime(start)

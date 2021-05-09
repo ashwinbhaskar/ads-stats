@@ -4,13 +4,14 @@ import doobie.util.transactor.Transactor
 import doobie.implicits._
 import doobie.postgres.implicits._
 import cats.implicits._
+import cats.effect.Async
 import ads.delivery.adt._
 import ads.delivery.Types._
 import ads.delivery.model.{Stats, Install, Delivery, Click, CategorizedStats}
 import ads.delivery.implicits.DbConverters._
 import natchez.Span
 
-class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
+class StatsRepositoryImpl[F[_]: Async](transactor: Transactor[F])
     extends StatsRepository[F] {
 
   private val ifInsertSuccess: Int => Either[Error, Unit] = { _ =>
@@ -28,7 +29,7 @@ class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
   override def recordDelivery(
       d: Delivery
   )(implicit tracingContext: Span[F]): FResult[F, Unit] =
-    tracingContext.span("Record delivery repository") use { _ =>
+    tracingContext.span("Delivery - Repository") use { _ =>
       sql"INSERT INTO delivery(delivery_id, advertisement_id, t, browser, os, site) VALUES (${d.deliveryId}, ${d.advertisementId},${d.time},${d.browser},${d.os},${d.site})".update.run
         .transact(transactor)
         .redeem(ifException, ifInsertSuccess)
@@ -37,7 +38,7 @@ class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
   override def recordInstall(i: Install)(implicit
       tracingContext: Span[F]
   ): FResult[F, Unit] =
-    tracingContext.span("Record install repository") use { _ =>
+    tracingContext.span("Install - Repository") use { _ =>
       sql"INSERT INTO install(install_id, click_id, t) VALUES(${i.installId}, ${i.clickId}, ${i.time})".update.run
         .transact(transactor)
         .redeem(ifException, ifInsertSuccess)
@@ -46,7 +47,7 @@ class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
   override def recordClick(c: Click)(implicit
       tracingContext: Span[F]
   ): FResult[F, Unit] =
-    tracingContext.span("Record click repository") use { _ =>
+    tracingContext.span("Click - Repository") use { _ =>
       sql"INSERT INTO click(delivery_id, click_id, t) VALUES(${c.deliveryId}, ${c.clickId}, ${c.time})".update.run
         .transact(transactor)
         .redeem(ifException, ifInsertSuccess)
@@ -58,7 +59,7 @@ class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
   )(implicit
       tracingContext: Span[F]
   ): FResult[F, Stats] =
-    tracingContext.span("Get stats repository") use { _ =>
+    tracingContext.span("Overall stats - Repository") use { _ =>
       val result: F[Stats] =
         for {
           deliveries <-
@@ -90,7 +91,7 @@ class StatsRepositoryImpl[F[_]: ThrowableMonadCancel](transactor: Transactor[F])
   )(implicit
       tracingContext: Span[F]
   ): FResult[F, List[CategorizedStats]] =
-    tracingContext.span("Get categorized stats repository") use { _ =>
+    tracingContext.span("Categorised stats - Repository") use { _ =>
       val result: F[List[CategorizedStats]] =
         for {
           deliveries <-
