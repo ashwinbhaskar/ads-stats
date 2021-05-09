@@ -96,7 +96,7 @@ object AdsStatsRequests {
         deliveryRequests ++ clicksRequests ++ installsRequests
     }.flatten
 
-    Stream.fromIterator[IO](rs.iterator)
+    Stream.fromIterator[IO](rs.iterator, 10)
   }
 
   def timeTravel(config: AdsStatsService, ttd: TimeTravelData): List[IO[_]] = {
