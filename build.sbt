@@ -15,10 +15,10 @@ assemblyMergeStrategy in assembly := {
 }
 
 val circeVersion = "0.14.0-M6"
-val doobieVersion = "1.0.0-M2"
-val http4sVersion = "1.0.0-M21"
+val doobieVersion = "1.0.0-RC1"
+val http4sVersion = "1.0.0-M25"
 val natchezVersion = "0.1.2"
-val catsEffectVersion = "3.1.0"
+val catsEffectVersion = "3.2.5"
 val testContainerVersion = "0.39.3"
 val compilerOptions = Seq(
       "-Ywarn-dead-code",
